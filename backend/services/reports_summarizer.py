@@ -30,7 +30,7 @@ SYSTEM_PROMPT = """You are a health-information editor for 9ja Health, a Nigeria
 You receive ONE real article that was already fetched from an official or trusted source. You do NOT have internet access. Use ONLY the provided text.
 
 Your job:
-1. Write a short plain-language summary for the Nigerian public.
+1. Write a clear public briefing of exactly TWO short paragraphs.
 2. Classify topic, location scope, and urgency.
 3. Return valid JSON only. No markdown. No extra keys.
 
@@ -39,7 +39,11 @@ Rules:
 - Never give medical advice, diagnoses, or medicine doses.
 - If the text is not health-related or is too thin to summarise, set "skip" to true and explain why in "skip_reason".
 - Prefer Nigeria-relevant framing when the article is about Nigeria or West Africa.
-- Keep summary under 120 words, clear English, no jargon where possible.
+- Put the write-up in "summary_paragraphs" as an array of exactly two strings.
+- Each paragraph should be 2–4 sentences in plain English (no newline characters inside a paragraph).
+- Paragraph 1: what happened / what the authority said.
+- Paragraph 2: why it matters for people in Nigeria (or globally if it is a world update), without inventing advice.
+- Do not put the source URL inside the write-up; the app shows the link separately.
 - Set is_ai_summary to true always.
 """
 
@@ -75,7 +79,10 @@ Return exactly this JSON shape:
   "skip": false,
   "skip_reason": null,
   "title": "cleaned title from the source",
-  "summary": "short public summary",
+  "summary_paragraphs": [
+    "First paragraph about what the source reported.",
+    "Second paragraph about why it matters for the public."
+  ],
   "topic": "disease|policy|vaccine|outbreak|medical_tech|guidance|other",
   "location_scope": "nigeria|west_africa|global",
   "urgency": "low|medium|high",
@@ -131,7 +138,21 @@ def _as_urgency(value: Any) -> Urgency:
     return "low"
 
 
+def _fallback_writeup(article: ScrapedArticle) -> str:
+    first = (
+        f"{article.source_name} has issued an official update titled "
+        f"“{article.title}”."
+    )
+    second = (
+        "This notice comes from a trusted public-health source. "
+        "Open the original link below to read the full details in the authority’s own words."
+    )
+    return f"{first}\n\n{second}"
+
+
 def summarise_article(platform: AIPlatform, article: ScrapedArticle) -> SummaryResult:
+    model = "fallback"
+    data: dict[str, Any] = {}
     try:
         text, model = platform.chat(
             [
@@ -139,24 +160,43 @@ def summarise_article(platform: AIPlatform, article: ScrapedArticle) -> SummaryR
                 {"role": "user", "content": _user_prompt(article)},
             ]
         )
-    except AIPlatformError:
-        log.exception("AI summarisation failed for %s", article.original_url)
-        raise
+        data = _extract_json(text)
+    except (AIPlatformError, json.JSONDecodeError, ValueError) as err:
+        log.warning(
+            "AI write-up unavailable for %s (%s) — using safe fallback",
+            article.original_url,
+            type(err).__name__,
+        )
+        return SummaryResult(
+            skip=False,
+            skip_reason=None,
+            title=article.title,
+            summary=_fallback_writeup(article),
+            topic="outbreak" if "outbreak" in article.title.lower() else "guidance",
+            location_scope=_as_scope(None, article.source_slug),
+            urgency="medium" if article.source_slug == "ncdc" else "low",
+            is_ai_summary=False,
+            raw_excerpt=article.article_text[:500],
+            model_used=model,
+        )
 
-    data = _extract_json(text)
     skip = bool(data.get("skip"))
     title = str(data.get("title") or article.title).strip()[:300] or article.title
-    summary = str(data.get("summary") or "").strip()
+    paragraphs = data.get("summary_paragraphs")
+    if isinstance(paragraphs, list):
+        cleaned = [str(part).strip() for part in paragraphs if str(part).strip()]
+        summary = "\n\n".join(cleaned[:2])
+    else:
+        summary = str(data.get("summary") or "").strip()
     excerpt = str(data.get("raw_excerpt") or "").strip()[:4000]
-    if not skip and len(summary) < 40:
-        skip = True
-        data["skip_reason"] = data.get("skip_reason") or "Summary too short or empty."
+    if not skip and len(summary) < 80:
+        summary = _fallback_writeup(article)
 
     return SummaryResult(
         skip=skip,
         skip_reason=(str(data.get("skip_reason")) if data.get("skip_reason") else None),
         title=title,
-        summary=summary[:4000] if summary else article.title,
+        summary=summary[:4000] if summary else _fallback_writeup(article),
         topic=_as_topic(data.get("topic")),
         location_scope=_as_scope(data.get("location_scope"), article.source_slug),
         urgency=_as_urgency(data.get("urgency")),

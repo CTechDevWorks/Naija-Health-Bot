@@ -1,0 +1,30 @@
+# Backup cron: 07:00 Africa/Lagos (= 06:00 UTC, no DST).
+# Set repository secrets:
+#   UPDATES_JOB_URL   e.g. https://your-service.onrender.com/api/v1/jobs/daily-health-updates
+#   UPDATES_JOB_SECRET  same value as backend UPDATES_JOB_SECRET (optional if unset on server)
+
+name: Daily health updates
+
+on:
+  schedule:
+    - cron: "0 6 * * *"
+  workflow_dispatch:
+
+jobs:
+  run-updates:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger daily health-updates job
+        env:
+          UPDATES_JOB_URL: ${{ secrets.UPDATES_JOB_URL }}
+          UPDATES_JOB_SECRET: ${{ secrets.UPDATES_JOB_SECRET }}
+        run: |
+          if [ -z "$UPDATES_JOB_URL" ]; then
+            echo "UPDATES_JOB_URL secret is not set — skipping."
+            exit 0
+          fi
+          headers=(-H "Content-Type: application/json" -H "Accept: application/json")
+          if [ -n "$UPDATES_JOB_SECRET" ]; then
+            headers+=(-H "X-Job-Secret: $UPDATES_JOB_SECRET")
+          fi
+          curl -fsS -X POST "${headers[@]}" "$UPDATES_JOB_URL"

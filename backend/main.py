@@ -51,6 +51,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from api import chat, conversations, health, reports
 from config import settings
+from services.daily_scheduler import start_daily_scheduler
 from services.keep_alive import start_keep_alive
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s: %(message)s")
@@ -59,7 +60,10 @@ logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s: %(messag
 @asynccontextmanager
 async def lifespan(_: FastAPI) -> AsyncIterator[None]:
     keep_alive = start_keep_alive()
+    daily_updates = start_daily_scheduler()
     yield
+    if daily_updates:
+        daily_updates.cancel()
     if keep_alive:
         keep_alive.cancel()
 

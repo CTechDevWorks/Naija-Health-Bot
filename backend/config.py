@@ -112,6 +112,13 @@ class Settings:
     # 0 turns the keep-alive off.
     keep_alive_interval_s: int = _int("KEEP_ALIVE_INTERVAL_S", 300)
 
+    # ── Daily health-updates scheduler (07:00 Africa/Lagos) ──
+    # Blank = on when RENDER_EXTERNAL_URL is set, off locally.
+    # Set to 1/0 to force on/off.
+    updates_scheduler_enabled: str = os.getenv("UPDATES_SCHEDULER_ENABLED", "")
+    # How many AI write-ups to publish per daily run / show in the app feed.
+    updates_feed_limit: int = _int("UPDATES_FEED_LIMIT", 5)
+
     @property
     def accounts_configured(self) -> bool:
         """True once sign-in tokens can be verified and history can be stored."""

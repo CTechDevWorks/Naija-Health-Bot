@@ -5,10 +5,8 @@ import {
   AppText,
   Badge,
   Card,
-  ChoiceChip,
   Disclaimer,
   Screen,
-  SearchField,
   SourceLink,
   ui,
 } from "@/components/healthUi";
@@ -18,9 +16,10 @@ import {
   fetchHealthReports,
   formatReportDate,
   topicLabel,
-  urgencyLabel,
   type HealthReport,
 } from "@/services/healthReportsApi";
+
+const FEED_LIMIT = 5;
 
 const authorities = [
   {
@@ -45,21 +44,36 @@ const authorities = [
   },
 ];
 
+function WriteUp({ text }: { text: string }) {
+  const paragraphs = text
+    .split(/\n\s*\n/)
+    .map((part) => part.trim())
+    .filter(Boolean);
+  const blocks = paragraphs.length > 0 ? paragraphs : [text.trim()].filter(Boolean);
+  return (
+    <View style={ui.stack}>
+      {blocks.map((paragraph, index) => (
+        <AppText key={`p-${index}`} tone="body">
+          {paragraph}
+        </AppText>
+      ))}
+    </View>
+  );
+}
+
 export default function UpdatesScreen() {
   const [reports, setReports] = useState<HealthReport[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [query, setQuery] = useState("");
-  const [filter, setFilter] = useState("All");
 
   const load = useCallback(async (mode: "focus" | "refresh" = "focus") => {
     if (mode === "refresh") setRefreshing(true);
     else setLoading(true);
     setError(null);
     try {
-      const next = await fetchHealthReports(30);
-      setReports(next);
+      const next = await fetchHealthReports(FEED_LIMIT);
+      setReports(next.slice(0, FEED_LIMIT));
     } catch (err) {
       setError(
         err instanceof Error
@@ -84,24 +98,10 @@ export default function UpdatesScreen() {
     }, [load]),
   );
 
-  const filteredReports = reports.filter((report) => {
-    const scopeOk =
-      filter === "All" ||
-      (filter === "Nigeria" && report.location_scope === "nigeria") ||
-      (filter === "Global" &&
-        (report.location_scope === "global" ||
-          report.location_scope === "west_africa"));
-    if (!scopeOk) return false;
-    const q = query.trim().toLowerCase();
-    if (!q) return true;
-    const hay = `${report.title} ${report.summary} ${report.source?.name ?? ""} ${report.topic}`.toLowerCase();
-    return hay.includes(q);
-  });
-
   return (
     <Screen
       title="Informed, not overwhelmed."
-      subtitle="Official health updates, summarised for clarity."
+      subtitle="Five daily write-ups from official health sources."
       refreshControl={
         <RefreshControl
           refreshing={refreshing}
@@ -131,7 +131,7 @@ export default function UpdatesScreen() {
         </Card>
       ) : null}
 
-      {!loading && !error && filteredReports.length === 0 ? (
+      {!loading && !error && reports.length === 0 ? (
         <Card soft>
           <Badge>NO REPORTS YET</Badge>
           <HealthIcon name="news" />
@@ -139,53 +139,33 @@ export default function UpdatesScreen() {
             Today’s briefing isn’t ready
           </AppText>
           <AppText tone="body">
-            Fresh reports appear after the daily scrape finishes. Meanwhile,
+            Fresh write-ups appear after the 7:00 AM Africa/Lagos run. Meanwhile,
             explore official Nigerian health authorities below.
           </AppText>
         </Card>
       ) : null}
 
-      {!loading && reports.length > 0 ? (
-        <>
-          <SearchField
-            placeholder="Search updates"
-            value={query}
-            onChangeText={setQuery}
-          />
-          <View style={ui.row}>
-            {["All", "Nigeria", "Global"].map((item) => (
-              <ChoiceChip
-                key={item}
-                label={item}
-                active={filter === item}
-                onPress={() => setFilter(item)}
-              />
-            ))}
-          </View>
-          {filteredReports.map((report) => (
-            <Card key={report.id} soft>
-              <View style={ui.row}>
-                <Badge>{topicLabel(report.topic)}</Badge>
-                {report.urgency !== "low" ? (
-                  <Badge>{urgencyLabel(report.urgency)}</Badge>
-                ) : null}
-                {report.is_ai_summary ? <Badge>AI SUMMARY</Badge> : null}
-              </View>
-              <AppText variant="heading" tone="forest">
-                {report.title}
-              </AppText>
-              <AppText variant="caption" tone="body">
-                {report.source?.name ?? "Official source"}
-                {report.published_at
-                  ? ` · ${formatReportDate(report.published_at)}`
-                  : ""}
-              </AppText>
-              <AppText tone="body">{report.summary}</AppText>
-              <SourceLink title="Read the original" url={report.original_url} />
-            </Card>
-          ))}
-        </>
-      ) : null}
+      {!loading &&
+        reports.map((report, index) => (
+          <Card key={report.id} soft>
+            <View style={ui.row}>
+              <Badge>{`Update ${index + 1} of ${reports.length}`}</Badge>
+              <Badge>{topicLabel(report.topic)}</Badge>
+              {report.is_ai_summary ? <Badge>AI WRITE-UP</Badge> : null}
+            </View>
+            <AppText variant="heading" tone="forest">
+              {report.title}
+            </AppText>
+            <AppText variant="caption" tone="body">
+              {report.source?.name ?? "Official source"}
+              {report.published_at
+                ? ` · ${formatReportDate(report.published_at)}`
+                : ""}
+            </AppText>
+            <WriteUp text={report.summary} />
+            <SourceLink title="Read the original" url={report.original_url} />
+          </Card>
+        ))}
 
       <AppText variant="heading" tone="forest">
         Official directory

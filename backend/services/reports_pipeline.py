@@ -7,14 +7,34 @@ from dataclasses import dataclass
 from datetime import date, datetime, timedelta, timezone
 
 from ai.base import AIPlatform
+from config import settings
 from services import reports_store
-from services.reports_scraper import collect_articles
+from services.reports_scraper import ScrapedArticle, collect_articles
 from services.reports_summarizer import summarise_article
 
 log = logging.getLogger("naija_health.reports.pipeline")
 
 # Africa/Lagos is UTC+1 year-round (no DST). Avoid zoneinfo/tzdata on Windows.
 LAGOS = timezone(timedelta(hours=1), name="Africa/Lagos")
+
+_SOURCE_RANK = {
+    "ncdc": 0,
+    "fmohsw": 1,
+    "nphcda": 2,
+    "nmep": 3,
+    "who-afro": 4,
+    "who": 5,
+}
+
+
+def _prefer_nigeria_first(articles: list[ScrapedArticle]) -> list[ScrapedArticle]:
+    return sorted(
+        articles,
+        key=lambda a: (
+            _SOURCE_RANK.get(a.source_slug, 50),
+            -a.published_at.timestamp(),
+        ),
+    )
 
 
 @dataclass(frozen=True)
@@ -35,9 +55,10 @@ def _lagos_today() -> date:
 def run_daily_updates(
     platform: AIPlatform,
     *,
-    max_new: int = 8,
+    max_new: int | None = None,
 ) -> PipelineResult:
     """Scrape allowlisted sources, summarise new items, insert into Supabase."""
+    limit = max_new if max_new is not None else settings.updates_feed_limit
     day = _lagos_today().isoformat()
     job_id: str | None = None
     fetched = 0
@@ -55,9 +76,9 @@ def run_daily_updates(
         fetched = len(articles)
 
         known = reports_store.existing_url_hashes([a.url_hash for a in articles])
-        fresh = [a for a in articles if a.url_hash not in known]
+        fresh = _prefer_nigeria_first([a for a in articles if a.url_hash not in known])
         duplicates = len(articles) - len(fresh)
-        fresh = fresh[:max_new]
+        fresh = fresh[: max(1, limit)]
         truncated = max(0, (fetched - duplicates) - len(fresh))
 
         for article in fresh:

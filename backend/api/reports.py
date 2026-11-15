@@ -9,6 +9,7 @@ import os
 from fastapi import APIRouter, Depends, Header, HTTPException, Query
 
 from ai.base import AIPlatform
+from config import settings
 from schemas import DailyUpdatesJobResponse, HealthReportItem, HealthReportListResponse
 from services import reports_pipeline, reports_store
 from services.reports_store import ReportsStoreError
@@ -36,9 +37,12 @@ def _require_job_secret(x_job_secret: str | None = Header(default=None, alias="X
 
 
 @router.get("/health-reports", response_model=HealthReportListResponse)
-def list_health_reports(limit: int = Query(default=30, ge=1, le=100)) -> HealthReportListResponse:
+def list_health_reports(
+    limit: int | None = Query(default=None, ge=1, le=100),
+) -> HealthReportListResponse:
+    feed_limit = limit if limit is not None else settings.updates_feed_limit
     try:
-        rows = reports_store.list_published_reports(limit=limit)
+        rows = reports_store.list_published_reports(limit=feed_limit)
     except ReportsStoreError as err:
         raise HTTPException(503, str(err)) from err
 
@@ -54,7 +58,9 @@ def list_health_reports(limit: int = Query(default=30, ge=1, le=100)) -> HealthR
 def run_daily_health_updates(
     platform: AIPlatform = Depends(get_ai_platform),
 ) -> DailyUpdatesJobResponse:
-    result = reports_pipeline.run_daily_updates(platform)
+    result = reports_pipeline.run_daily_updates(
+        platform, max_new=settings.updates_feed_limit
+    )
     if result.status == "failed":
         # Still return a structured body so Make.com / cron can log it.
         raise HTTPException(
