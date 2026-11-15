@@ -481,32 +481,40 @@ The report should prioritize authoritative information.
 
 ---
 
-# 21. ⚡ ZAPIER AUTOMATION
+# 21. ⏰ DAILY HEALTH REPORT SCHEDULER (BACKEND)
 
-Zapier will be used to automate the health-report pipeline.
+The daily Nigerian health report is generated **entirely inside the backend**. There is **no Zapier** (or other external automation platform) in this product.
 
 Expected flow:
 
-> Official health update → Zapier → Filter → Extract information → AI summarization → Backend/database → Mobile application
+> Backend scheduler (06:30 Africa/Lagos) → Specific AI request → Structured health-report answer → Store on backend → Mobile application displays it
 
-The system should extract:
+### Behaviour
+
+1. A backend function/scheduler checks the time.
+2. At **06:30am** (Nigeria local time — `Africa/Lagos`), it runs once for that day.
+3. It sends a **specific, fixed-purpose request** to the AI model (not an open-ended chat).
+4. The AI returns a structured daily health-report answer grounded in trusted Nigerian / WHO public-health sources where available.
+5. The backend stores the result.
+6. The mobile app fetches and displays it on the Updates screen / dashboard preview.
+
+The system should produce structured fields such as:
 
 - Title
-- Publication date
-- Source
-- Original URL
-- Relevant content
+- Publication / generation date
+- Source(s)
+- Original URL(s) where applicable
+- Relevant content / summary
 - Topic
-- Location
+- Location (national or state where known)
 - Urgency where appropriate
-
-The AI can summarize the report.
+- AI-generated indicator
 
 However:
 
-> **AI must never invent the underlying health report.**
+> **AI must never invent the underlying health facts or fabricate sources.**
 
-The original source and publication date should always be preserved.
+Original sources and dates should always be preserved when the answer is based on retrieved authoritative material.
 
 AI-generated summaries should be clearly identifiable.
 
@@ -683,13 +691,14 @@ Avoid unnecessary account/authentication complexity for the MVP unless required.
 - WHO
 - Nigerian public-health sources
 
-### Automation
+### Daily report scheduling
 
-- Zapier
+- Backend scheduler (runs at 06:30 Africa/Lagos)
+- No Zapier or external workflow automation platform
 
 ### AI
 
-A suitable LLM API may be used for the health assistant and report summarization, but all API keys must remain server-side.
+A suitable LLM API may be used for the health assistant and the scheduled daily health report, but all API keys must remain server-side.
 
 ---
 
@@ -705,7 +714,7 @@ Additional systems:
 
 and:
 
-> Nigerian Health Sources → Zapier → AI Summarization → Backend → Mobile UI
+> Backend scheduler (06:30) → AI daily-report request → Store report → Mobile UI
 
 The architecture should remain modular so each service can evolve independently.
 
@@ -715,7 +724,7 @@ The architecture should remain modular so each service can evolve independently.
 
 The product follows this principle:
 
-> **ML predicts → Weather informs → Rules recommend → RAG explains → Zapier keeps information fresh.**
+> **ML predicts → Weather informs → Rules recommend → RAG explains → Backend scheduler keeps the daily health report fresh.**
 
 Each technology should have a clear job.
 
@@ -733,11 +742,11 @@ Used for deterministic prevention recommendations.
 
 ### RAG + LLM
 
-Used for explaining health information from trusted sources.
+Used for explaining health information from trusted sources, and for generating the scheduled daily health report answer.
 
-### Zapier
+### Backend daily scheduler
 
-Used for automating health-information collection and updates.
+Used to run the 06:30am daily health-report job inside FastAPI — no Zapier.
 
 Do not use AI simply because AI sounds impressive.
 
@@ -810,7 +819,7 @@ After P0 works:
 - Health AI assistant
 - RAG
 - Nigerian health reports
-- Zapier automation
+- Backend 06:30 daily report scheduler
 - Notifications
 - Prediction explanation
 - Historical trends
@@ -936,7 +945,7 @@ The application should demonstrate that the team can combine:
 - Geospatial technology
 - Climate data
 - AI/RAG
-- Automation
+- Backend-scheduled daily health reports
 - Mobile development
 - Backend engineering
 
@@ -950,7 +959,7 @@ The judges should be able to clearly understand:
 6. Where the data comes from.
 7. How GPS connects the user to the data.
 8. How the AI assistant works.
-9. How the health-report automation works.
+9. How the backend 06:30 daily health-report job works.
 10. What the model's limitations are.
 11. What the team would build next.
 
@@ -1045,7 +1054,7 @@ Do not allow optional features to delay the core prediction pipeline.
 
 **Primary interface:** Lightweight mobile application
 
-**Core technologies:** GPS + climate data + machine learning + AI + public-health information + automation
+**Core technologies:** GPS + climate data + machine learning + AI + public-health information + backend-scheduled daily reports
 
 **Core promise:**
 

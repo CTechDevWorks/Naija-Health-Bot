@@ -9,10 +9,10 @@ description: >
   e-commerce marketplace into a mobile-first React Native / Expo app.
   Shape (all-rounded), chart style, motion personality, haptics/sound,
   prevention groups, and assistant starter questions are locked.
-  Fields that still require a special brand/design touch — colours,
-  typography, logo, iconography, imagery, elevation tint/scrim colour,
-  and signature chrome — remain BLANK (TODO / BLANK). Agents must not
-  invent values for blank fields. See §15 for the blank register.
+  Core brand colours + Inter are LOCKED (product owner 2026-11-15).
+  Remaining BLANK fields: derived palette steps, risk/semantic colours,
+  type scale sizes, logo wiring, iconography, imagery, elevation tint.
+  Agents must not invent values for blank fields. See §15.
 
 # =============================================================================
 # BRAND TOKENS — PARTIALLY LOCKED
@@ -22,87 +22,73 @@ description: >
 # =============================================================================
 
 colors:
-  # --- Brand ---
-  # BLANK: The entire palette requires a special brand touch.
-  # No hex values, no palette names, and no brand-colour mix/ratio
-  # (TPM's locked 60/40 brown/green has NO equivalent here yet) are defined.
-  brand-mix: null                        # BLANK — TODO: brand colour mix/ratio, if any
-  primary: null                          # BLANK — TODO: hex — lead brand colour; primary CTAs, key actions
-  primary-active: null                   # BLANK — TODO: hex — pressed primary
-  primary-disabled: null                 # BLANK — TODO: hex — disabled primary
-  secondary: null                        # BLANK — TODO: hex — supporting brand colour; trust/secondary moments
-  secondary-active: null                 # BLANK — TODO: hex — pressed secondary
-  accent: null                           # BLANK — TODO: hex (optional) — environmental / data accents
-  on-primary: null                       # BLANK — TODO: hex — text/icons on primary fills
-  on-secondary: null                     # BLANK — TODO: hex — text/icons on secondary fills
+  # Owner core: Primary #7DBA84 · Background #F5ECD4 · Text #232323
+  # Remaining steps filled by design intuition (calm companion, non-alarmist).
+  brand-mix: none                        # No forced chromatic ratio
+  primary: "#7DBA84"
+  primary-active: "#5F9A66"              # Pressed primary (darker green)
+  primary-disabled: "#B8D9BC"            # Soft disabled tint of primary
+  secondary: "#3D6B45"                   # Deeper green — trust / secondary filled CTAs / active chips
+  secondary-active: "#2F5236"
+  accent: none                           # No third brand accent — reuse primary for data accents
+  on-primary: "#FFFFFF"                  # White on soft green — better outdoor contrast than cream
+  on-secondary: "#F5ECD4"                # Cream on deep green
 
-  # --- Surfaces ---
-  # BLANK: Light / dark / system colour-mode is also undecided (TPM was
-  # light-only; that lock does NOT carry over automatically).
-  color-mode: null                       # BLANK — TODO: light-only | dark-only | light+dark | system
-  canvas: null                           # BLANK — TODO: hex — default screen background
-  canvas-soft: null                      # BLANK — TODO: hex — soft bands, grouped sections, data stages
-  surface-card: null                     # BLANK — TODO: hex — cards / elevated panels / sheets
-  surface-strong: null                   # BLANK — TODO: hex — icon buttons, chip fills, input fills
+  color-mode: light-only                 # Cream canvas product; no dark theme for MVP
+  canvas: "#F5ECD4"
+  canvas-soft: "#EDE4C9"                 # Soft bands / weather / disclaimer
+  surface-card: "#FFFDF8"                # Warm white cards on cream
+  surface-strong: "#E8DFC8"              # Icon buttons, chip fills
 
-  # --- Text ---
-  ink: null                              # BLANK — TODO: hex — headlines / primary text
-  body: null                             # BLANK — TODO: hex — secondary running text
-  muted: null                            # BLANK — TODO: hex — captions, metadata, source rows, timestamps
-  muted-soft: null                       # BLANK — TODO: hex — disabled / lowest emphasis
-  on-dark: null                          # BLANK — TODO: hex — text on dark scrims / dark fills (if used)
+  ink: "#232323"
+  body: "#3F3F3F"                        # Long-form secondary text
+  muted: "#6B6B6B"                       # Captions, sources, timestamps
+  muted-soft: "#9A9A9A"                  # Disabled / lowest emphasis
+  on-dark: "#F5ECD4"
 
-  # --- Chrome ---
-  hairline: null                         # BLANK — TODO: hex — default 1px borders / dividers
-  hairline-soft: null                    # BLANK — TODO: hex — lighter divider
-  border-strong: null                    # BLANK — TODO: hex — stronger / focused outline
-  scrim: null                            # BLANK — TODO: colour + opacity — modal / sheet backdrop
+  hairline: "#D9CFB5"
+  hairline-soft: "#E8DFC8"
+  border-strong: "#B8AD90"
+  scrim: "#000000"                       # Render at 50% opacity
 
-  # --- Health semantics ---
-  # BLANK: Every semantic value is undecided. In particular, the colour
-  # mapping for risk categories (Low / Moderate / Elevated / High) must be
-  # chosen deliberately and tested — never assume green→red or any ramp.
-  success: null                          # BLANK — TODO: hex — confirmation, completed prevention action
-  error: null                            # BLANK — TODO: hex — form errors, failures, destructive actions
-  warning: null                          # BLANK — TODO: hex — caution, stale data, degraded service
-  info: null                             # BLANK — TODO: hex — informational tips, source notes
-  risk-low: null                         # BLANK — TODO: hex — "Low" area-level risk category
-  risk-moderate: null                    # BLANK — TODO: hex — "Moderate" area-level risk category
-  risk-elevated: null                    # BLANK — TODO: hex — "Elevated" area-level risk category
-  risk-high: null                        # BLANK — TODO: hex — "High" area-level risk category
-  chart-series: null                     # BLANK — TODO: palette for trends, factors, forecasts
+  # Semantics — calm, not clinical alarm. Risk always paired with text labels.
+  success: "#5F9A66"
+  error: "#C45C4A"                       # Muted brick — not screaming red
+  warning: "#C4923A"                     # Warm amber for stale/caution
+  info: "#5A7A8A"                        # Quiet blue-grey tips
+  risk-low: "#7DBA84"                    # Same family as primary — calm
+  risk-moderate: "#C4A35A"
+  risk-elevated: "#C47A4A"
+  risk-high: "#B85C4A"                   # Serious but not panic-red
+  chart-series: ["#7DBA84", "#3D6B45", "#C4A35A", "#5A7A8A"]
 
 typography:
-  # BLANK: All typographic choices require a special brand touch.
-  # The token NAMES and ROLES below are locked; every family, import,
-  # size, weight, line-height, and letter-spacing value is blank.
-  # Legibility requirements that any filled choice must meet are in §3.
-  font-display: null                     # BLANK — TODO: family stack for headlines / display
-  font-body: null                        # BLANK — TODO: family stack for body / UI / buttons
-  font-mono: null                        # BLANK — TODO: family stack for data/code (rare)
-  font-import: null                      # BLANK — TODO: font loading URL / Expo font assets
-  font-optical-sizing: null              # BLANK — TODO: if the chosen display font supports it
+  font-display: "'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif"
+  font-body: "'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif"
+  font-mono: "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace"
+  font-import: "https://fonts.googleapis.com/css2?family=Inter:opsz@14..32&display=swap"
+  font-expo-package: "@expo-google-fonts/inter"
+  font-optical-sizing: auto
 
-  # Token roles (values BLANK — TODO: fontFamily, fontSize, fontWeight,
-  # lineHeight, letterSpacing for every token below):
-  display-xl: null                       # BLANK — TODO — onboarding / major outlook moment (rare)
-  display-lg: null                       # BLANK — TODO — screen-level hero statement
-  display-md: null                       # BLANK — TODO — screen titles
-  heading-xl: null                       # BLANK — TODO — card / section heads (large)
-  heading-lg: null                       # BLANK — TODO — sub-section titles
-  heading-md: null                       # BLANK — TODO — compact titles, list item heads
-  body-lg: null                          # BLANK — TODO — lead explanations, outlook summary
-  body-md: null                          # BLANK — TODO — default UI body
-  body-strong: null                      # BLANK — TODO — emphasis, risk label, key values
-  body-sm: null                          # BLANK — TODO — card meta, secondary detail
-  caption: null                          # BLANK — TODO — source rows, timestamps, footnotes
-  micro: null                            # BLANK — TODO — legal, disclaimers (must stay readable)
-  badge: null                            # BLANK — TODO — risk category / topic / urgency badges
-  button-md: null                        # BLANK — TODO — primary/secondary buttons
-  button-sm: null                        # BLANK — TODO — compact buttons, chips
-  tab-label: null                        # BLANK — TODO — bottom tab bar labels
-  data-value: null                       # BLANK — TODO — weather/prediction values (use tabular figures)
-  data-label: null                       # BLANK — TODO — labels paired with data values
+  # Mobile-first Inter scale (intuition). Weights: 400 body, 600 emphasis.
+  display-xl: { fontFamily: Inter, fontSize: 32, fontWeight: 600, lineHeight: 1.15, letterSpacing: -0.5 }
+  display-lg: { fontFamily: Inter, fontSize: 28, fontWeight: 600, lineHeight: 1.2, letterSpacing: -0.25 }
+  display-md: { fontFamily: Inter, fontSize: 24, fontWeight: 600, lineHeight: 1.25, letterSpacing: 0 }
+  heading-xl: { fontFamily: Inter, fontSize: 22, fontWeight: 600, lineHeight: 1.25, letterSpacing: 0 }
+  heading-lg: { fontFamily: Inter, fontSize: 18, fontWeight: 600, lineHeight: 1.3, letterSpacing: 0 }
+  heading-md: { fontFamily: Inter, fontSize: 16, fontWeight: 600, lineHeight: 1.35, letterSpacing: 0 }
+  body-lg: { fontFamily: Inter, fontSize: 17, fontWeight: 400, lineHeight: 1.5, letterSpacing: 0 }
+  body-md: { fontFamily: Inter, fontSize: 16, fontWeight: 400, lineHeight: 1.5, letterSpacing: 0 }
+  body-strong: { fontFamily: Inter, fontSize: 16, fontWeight: 600, lineHeight: 1.5, letterSpacing: 0 }
+  body-sm: { fontFamily: Inter, fontSize: 14, fontWeight: 400, lineHeight: 1.45, letterSpacing: 0 }
+  caption: { fontFamily: Inter, fontSize: 13, fontWeight: 500, lineHeight: 1.4, letterSpacing: 0 }
+  micro: { fontFamily: Inter, fontSize: 12, fontWeight: 500, lineHeight: 1.35, letterSpacing: 0 }
+  badge: { fontFamily: Inter, fontSize: 11, fontWeight: 600, lineHeight: 1.2, letterSpacing: 0 }
+  button-md: { fontFamily: Inter, fontSize: 16, fontWeight: 600, lineHeight: 1.25, letterSpacing: 0 }
+  button-sm: { fontFamily: Inter, fontSize: 14, fontWeight: 600, lineHeight: 1.25, letterSpacing: 0 }
+  tab-label: { fontFamily: Inter, fontSize: 11, fontWeight: 600, lineHeight: 1.2, letterSpacing: 0 }
+  data-value: { fontFamily: Inter, fontSize: 20, fontWeight: 600, lineHeight: 1.2, letterSpacing: 0, fontFeature: tnum }
+  data-label: { fontFamily: Inter, fontSize: 12, fontWeight: 500, lineHeight: 1.35, letterSpacing: 0 }
 
 rounded:
   # LOCKED — all-rounded personality (soft companion, not clinical/sharp).
@@ -143,9 +129,9 @@ layout:
   sticky-action-height: 64px             # Sticky bottom action bars, excluding safe-area inset
   touch-min: 44px
   touch-preferred: 48px
-  logo-nav-height: null                  # BLANK — TODO: depends on final logo (§5)
-  logo-clear-space: null                 # BLANK — TODO: depends on final logo (§5)
-  app-icon-size: null                    # BLANK — TODO: per platform / store requirements at build time
+  logo-nav-height: 32px                  # Placeholder until final logo; keep compact
+  logo-clear-space: 16px
+  app-icon-size: platform-default        # Follow Expo / store size tables at build time
 
 breakpoints:
   # Phones are the product. Tablet is a supported stretch, not a second design.
@@ -162,8 +148,8 @@ product:
   initial-market: "Nigeria"
   initial-predictive-focus: "Malaria — area-level annual incidence (Malaria Atlas Project target)"
   platform: "React Native + Expo + TypeScript (mobile app — not a website)"
-  color-mode: null                       # BLANK — TODO: see colors.color-mode
-  signature-chrome: null                 # BLANK — TODO: none, or a future brand motif (§5, §15)
+  color-mode: light-only
+  signature-chrome: none
   currency: null                         # Not applicable — no commerce
   account-required: false                # Locked — no unnecessary auth for the MVP (PM §27)
   continuous-tracking: false             # Locked — foreground location only, no background tracking
@@ -331,7 +317,7 @@ components:
   bottom-tab-bar:
     backgroundColor: "{colors.canvas}"           # BLANK value
     textColor: "{colors.ink}"                    # BLANK value
-    activeTextColor: null                        # BLANK — TODO: token (likely primary/secondary)
+    activeTextColor: "{colors.primary}"
     labelTypography: "{typography.tab-label}"    # BLANK value
     height: "{layout.bottom-tab-height}"
     borderTop: "1px solid {colors.hairline}"     # BLANK colour
@@ -384,16 +370,19 @@ components:
     - "Why does rain matter for malaria here?"
 
 brand-assets:
-  # BLANK: Logo / icon / imagery still require a special brand touch.
-  logo-full: null                      # BLANK — TODO: file(s), anatomy, wordmark lockup
-  logo-mark-only: null                 # BLANK — TODO: file(s) — compact header, splash, empty states
-  app-icon: null                       # BLANK — TODO: iOS / Android app icon artwork
-  splash-screen: null                  # BLANK — TODO: splash artwork, background, timing
-  favicon-pwa: null                    # BLANK — TODO: only if a web surface is ever added
-  iconography: null                    # BLANK — TODO: icon library / custom set, stroke vs filled, weight
-  illustration-style: null             # BLANK — TODO: illustration/photo approach (onboarding, empty states)
-  photography-imagery: null            # BLANK — TODO: art direction — Nigerian contexts, people, environment
-  brand-motif: null                    # BLANK — TODO: signature chrome/motif, if any (map, weather, mosquito — or none)
+  # Final logo deferred (owner). Placeholder parked at assets/brand/logo-placeholder.jpeg
+  logo-full: deferred                  # Final artwork TBD — do not ship placeholder as brand
+  logo-mark-only: deferred
+  logo-placeholder-path: "naija-health-bot/assets/brand/logo-placeholder.jpeg"
+  app-icon: deferred                   # Use solid splash + temporary placeholder until brand lands
+  splash-screen:
+    background: "{colors.canvas}"      # #F5ECD4
+    image: none-for-now
+  favicon-pwa: deferred
+  iconography: "Ionicons via @expo/vector-icons — outline by default, filled when selected; always with text labels"
+  illustration-style: none             # Icon + copy only for empty/error states
+  photography-imagery: none            # No photography in MVP UI
+  brand-motif: none
   # Motion personality LOCKED (§12 / §15E.32) — calm companion, not playful bounce:
   motion-personality: quiet-settle
   motion-easing: ease-out              # Soft decelerate into rest; no spring / bounce
@@ -410,7 +399,7 @@ brand-assets:
 
 **Audience:** AI agents and developers building 9ja Health (React Native / Expo mobile app).
 
-**Rule:** This file is the design authority for structure, behaviour, content, and feel. Token *structure* is locked. Shape, chart geometry, motion, haptics, prevention groups, and starter questions are filled. Token *values* marked **BLANK** (mainly colour, type, logo/imagery) do not exist yet — do not invent them. Build with named tokens (`{colors.primary}`, `{typography.body-md}`, `{rounded.md}`) so blank values can drop in later without a refactor.
+**Rule:** This file is the design authority for structure, behaviour, content, and feel. Tokens are filled (owner core + intuition). Final logo/store artwork remains deferred. Build with named tokens (`{colors.primary}`, `{typography.body-md}`, `{rounded.md}`).
 
 **Source of truth for product intent:** `productmanagerdoc.md` (9JA HEALTH — Master Product Manager Brief). If this file and the PM brief disagree on product/safety meaning, the PM brief wins and this file must be updated.
 
@@ -480,7 +469,7 @@ Plus: **Settings** (from the header, not a 6th tab — §9.8 / PM §27), **locat
 
 ### 1.3 Product philosophy in one line
 
-> **ML predicts → Weather informs → Rules recommend → RAG explains → Zapier keeps information fresh.** (PM §30)
+> **ML predicts → Weather informs → Rules recommend → RAG explains → Backend scheduler (06:30) keeps the daily health report fresh.** (PM §30)
 
 Each layer gets its own visual treatment so users can tell *prediction* from *weather* from *advice* from *official report* — never blended into one undifferentiated “AI says” block.
 
@@ -497,44 +486,45 @@ Each layer gets its own visual treatment so users can tell *prediction* from *we
 
 ## 2. Colors
 
-> ⚠️ **THIS ENTIRE SECTION IS BLANK BY DESIGN.** No palette exists yet. The tables below define token *names, roles, and rules only*. Every value is `TODO` for the product owner / brand designer.
+> Core owner palette is locked. Derived steps, semantics, and risk colours remain BLANK.
 
 ### Brand mix
 | Item | Status |
 |---|---|
-| Brand colour mix / ratio (TPM had a locked 60/40) | **BLANK — TODO** — decide if a mix rule is even needed for a health app |
-| Lead brand colour (`{colors.primary}`) | **BLANK — TODO: hex** |
-| Supporting brand colour (`{colors.secondary}`) | **BLANK — TODO: hex** |
+| Brand colour mix / ratio (TPM had a locked 60/40) | **BLANK — TODO** — decide if a mix rule is even needed (optional) |
+| Lead brand colour (`{colors.primary}`) | **LOCKED `#7DBA84`** |
+| Screen background (`{colors.canvas}`) | **LOCKED `#F5ECD4`** (owner “Background/Secondary”) |
+| Supporting CTA colour (`{colors.secondary}`) | **BLANK — TODO: hex** — cream is canvas, not the secondary-CTA token |
 | Optional accent (`{colors.accent}`) | **BLANK — TODO: hex or “none”** |
 
-### Brand tokens (values BLANK)
-| Token | Use (locked) |
-|---|---|
-| `{colors.primary}` | Primary CTA fill, key actions, selected states |
-| `{colors.primary-active}` | Pressed primary |
-| `{colors.primary-disabled}` | Disabled primary |
-| `{colors.secondary}` | Secondary actions, trust moments, active filter chips |
-| `{colors.secondary-active}` | Pressed secondary |
-| `{colors.accent}` | Environmental/data accents — only if a third brand colour is chosen |
-| `{colors.on-primary}` / `{colors.on-secondary}` | Text/icons on brand fills |
+### Brand tokens
+| Token | Hex / status | Use (locked) |
+|---|---|---|
+| `{colors.primary}` | `#7DBA84` | Primary CTA fill, key actions, selected states |
+| `{colors.primary-active}` | **BLANK** | Pressed primary |
+| `{colors.primary-disabled}` | **BLANK** | Disabled primary |
+| `{colors.secondary}` | **BLANK** | Secondary actions, trust moments, active filter chips |
+| `{colors.secondary-active}` | **BLANK** | Pressed secondary |
+| `{colors.accent}` | **BLANK** | Environmental/data accents — only if chosen |
+| `{colors.on-primary}` / `{colors.on-secondary}` | **BLANK** | Text/icons on brand fills |
 
-### Surfaces (values BLANK)
-| Token | Use (locked) |
-|---|---|
-| `colors.color-mode` | **BLANK — TODO:** light-only / dark-only / both / system |
-| `{colors.canvas}` | Screen background |
-| `{colors.canvas-soft}` | Soft bands, weather strip, disclaimer, grouped sections |
-| `{colors.surface-card}` | Cards, inputs, sheets, assistant bubbles |
-| `{colors.surface-strong}` | Icon-button fills, citation chips |
+### Surfaces
+| Token | Hex / status | Use (locked) |
+|---|---|---|
+| `colors.color-mode` | **BLANK — TODO:** light-only / dark-only / both / system | |
+| `{colors.canvas}` | `#F5ECD4` | Screen background |
+| `{colors.canvas-soft}` | **BLANK** | Soft bands, weather strip, disclaimer, grouped sections |
+| `{colors.surface-card}` | **BLANK** | Cards, inputs, sheets, assistant bubbles |
+| `{colors.surface-strong}` | **BLANK** | Icon-button fills, citation chips |
 
-### Text (values BLANK)
-| Token | Use (locked) |
-|---|---|
-| `{colors.ink}` | Headlines, primary text |
-| `{colors.body}` | Long-form explanations |
-| `{colors.muted}` | Captions, source rows, timestamps, inactive tabs |
-| `{colors.muted-soft}` | Disabled text |
-| `{colors.on-dark}` | Text on dark scrims/fills, if any |
+### Text
+| Token | Hex / status | Use (locked) |
+|---|---|---|
+| `{colors.ink}` | `#232323` | Headlines, primary text |
+| `{colors.body}` | **BLANK** | Long-form explanations |
+| `{colors.muted}` | **BLANK** | Captions, source rows, timestamps, inactive tabs |
+| `{colors.muted-soft}` | **BLANK** | Disabled text |
+| `{colors.on-dark}` | **BLANK** | Text on dark scrims/fills, if any |
 
 ### Chrome & health semantics (values BLANK)
 | Token | Use (locked) |
@@ -564,20 +554,22 @@ Each layer gets its own visual treatment so users can tell *prediction* from *we
 
 ## 3. Typography
 
-> ⚠️ **THIS ENTIRE SECTION IS BLANK BY DESIGN.** No families, sizes, or weights exist yet. Token names/roles and the legibility rules below are locked; every value is `TODO`.
+> **Family locked: Inter** (display + body). Type *scale* (sizes/weights/line-heights) remains BLANK.
 
 ### Font loading
-```
-BLANK — TODO: @font-face / Expo Font assets / system-font decision + loading URL
-(TPM's Google Fonts import does NOT carry over — React Native does not use CSS @import.)
+```css
+/* Web / reference (owner-supplied) */
+@import url('https://fonts.googleapis.com/css2?family=Inter:opsz@14..32&display=swap');
 ```
 
-### Families (BLANK)
+**Expo / React Native:** do **not** rely on CSS `@import`. Bundle Inter with `@expo-google-fonts/inter` (or `expo-font`) so it works offline.
+
+### Families
 | Role | Status |
 |---|---|
-| Display / headlines (`{typography.font-display}`) | **BLANK — TODO: family + fallbacks** |
-| Body / UI / buttons / data (`{typography.font-body}`) | **BLANK — TODO: family + fallbacks** |
-| Mono / data-code (`{typography.font-mono}`) | **BLANK — TODO: family + fallbacks, or “system mono”** |
+| Display / headlines (`{typography.font-display}`) | **LOCKED — Inter** + system-ui fallbacks |
+| Body / UI / buttons / data (`{typography.font-body}`) | **LOCKED — Inter** + system-ui fallbacks |
+| Mono / data-code (`{typography.font-mono}`) | **BLANK — TODO:** family stack, or “system mono” |
 
 ### Hierarchy — roles locked, values BLANK
 | Token | Use (locked) | Size / Weight / Line-height / Spacing |
@@ -845,10 +837,11 @@ Home shows a preview of the top 2–3 items + “See all”. Checklist is encour
 - Safety escalation uses `{components.safety-escalation-card}` (§9.10). Conversation history OK; label AI-generated information (§4).
 
 ### 9.16 Health Updates — list & detail (PM §20–21, §26)
+- Reports are produced by the **backend 06:30 Africa/Lagos scheduler** (specific AI request → stored answer). **No Zapier.**
 - List of `{components.report-card}` + topic/state filter chips + search. Empty filter → honest empty state, not filler.
-- Detail: full AI summary (labelled) clearly separated from **“Read the original”** (source, date, URL). AI is never the origin (PM §21).
+- Detail: full AI summary (labelled) clearly separated from **“Read the original”** (source, date, URL) when authoritative URLs exist. AI is never presented as inventing official facts (PM §21).
 - Urgency badge + words if shown (colours BLANK) — never alarm styling for routine updates.
-- Sources: verified Nigerian authorities only (NCDC, Federal Ministry of Health and Social Welfare, NPHCDA, National Malaria Elimination Programme, other verified bodies — PM §20).
+- Grounding sources: verified Nigerian authorities / WHO where available (NCDC, Federal Ministry of Health and Social Welfare, NPHCDA, National Malaria Elimination Programme, other verified bodies — PM §20).
 
 ### 9.17 Settings (PM §27)
 Location preference, notifications (if P1 ships), report preferences, privacy (foreground-only), data sources, full disclaimer, about/version. No account section in MVP. Rows ≥48px; destructive actions use error colour (BLANK) + confirm. Disclaimer/privacy ≤1 tap away.
@@ -976,47 +969,21 @@ Unlike TPM, **do not show a rotate-upright shopping block**. A user checking a h
 
 ## 15. Remaining open items — THE BLANK REGISTER
 
-> Still blank = special brand/design touch required. Agents: do not invent these.
-> **Filled this pass (do not reopen without product owner):** all-rounded shape (§8), soft area-line chart style (§9.13), `quiet-settle` motion + soft-pulse skeletons + L→R chart draw (§12), selective-light haptics / silent sound (§12), prevention groups + assistant starters (§9.14–9.15).
+> Design tokens are filled (owner core + design intuition). **Final logo / store icons remain deferred** by product owner.
 
-### A. Colour (all of §2)
-1. `colors.primary`, `primary-active`, `primary-disabled` — hex values
-2. `colors.secondary`, `secondary-active` — hex values
-3. `colors.accent` — hex value, or decision that no accent exists
-4. `colors.on-primary`, `on-secondary` — hex values
-5. `colors.color-mode` (+ `product.color-mode`) — light-only / dark-only / both / system
-6. `colors.canvas`, `canvas-soft`, `surface-card`, `surface-strong` — hex values
-7. `colors.ink`, `body`, `muted`, `muted-soft`, `on-dark` — hex values
-8. `colors.hairline`, `hairline-soft`, `border-strong`, `scrim` (colour + opacity) — values
-9. `colors.success`, `error`, `warning`, `info` — hex values
-10. `colors.risk-low`, `risk-moderate`, `risk-elevated`, `risk-high` — hex values + category colour mapping rationale (accessibility-tested)
-11. `colors.chart-series` — chart palette only (chart *geometry/style* is locked)
-12. `colors.brand-mix` — brand colour mix/ratio, if any rule is wanted at all
-13. `components.bottom-tab-bar.activeTextColor` and the focus-ring colour (§13) — token + value
-14. Shadow/elevation tint values (§7, Levels 3–4) — offset/blur/colour/opacity (structure locked; colour tied to palette)
+### Still deferred (owner)
+1. Final logo artwork (placeholder only: `naija-health-bot/assets/brand/logo-placeholder.jpeg`)
+2. Production app icon / adaptive icon / splash image (splash uses canvas colour `#F5ECD4` for now)
+3. Notifications chrome when P1 notifications ship
+4. Optional medical wording polish on prevention groups / starter questions
 
-### B. Typography (all of §3)
-15. `typography.font-display`, `font-body`, `font-mono` — families + fallback stacks
-16. `typography.font-import` — Expo font loading assets/URL + offline bundling decision
-17. `typography.font-optical-sizing` — if applicable to the chosen display font
-18. Every type token's size / weight / line-height / letter-spacing: `display-xl`, `display-lg`, `display-md`, `heading-xl`, `heading-lg`, `heading-md`, `body-lg`, `body-md`, `body-strong`, `body-sm`, `caption`, `micro` (incl. its readable floor), `badge`, `button-md`, `button-sm`, `tab-label`, `data-value`, `data-label`
-19. Verification that chosen fonts cover Nigerian names/places/diacritics and don't block future Nigerian-language support
-
-### C. Logo, iconography, imagery & brand identity (all of §5)
-20. `brand-assets.logo-full` — artwork files, formats, folder (`Assets folder` in the header is also BLANK until this lands)
-21. `brand-assets.logo-mark-only` — artwork files
-22. `brand-assets.app-icon` — iOS/Android/store artwork
-23. `brand-assets.splash-screen` — artwork + background + behaviour
-24. Wordmark anatomy for “9ja Health” (depends on B)
-25. `layout.logo-nav-height`, `layout.logo-clear-space`, `layout.app-icon-size` — logo sizing/clear-space values
-26. `brand-assets.iconography` — icon library/custom set, stroke-vs-filled, weight (tab, weather, location, prevention, report, assistant, settings icons)
-27. `brand-assets.illustration-style` — onboarding/empty/error illustration approach, or explicit “none”
-28. `brand-assets.photography-imagery` — photography art direction (Nigerian contexts, consent, licensing), or explicit “no photography”; plus §8 media aspect ratios if used
-29. `brand-assets.brand-motif` / `product.signature-chrome` — signature motif, or explicit “none”
-
-### D. Still open (feature-gated)
-30. Whether notifications exist in the MVP visual system (bell/badge styling) — PM lists notifications as P1; no component is locked until the feature is confirmed
-31. Prevention group / starter-question *medical wording polish* — structure is locked; a content reviewer may refine phrasing without changing the groups or the six starter intents
+### Filled by intuition (do not reopen without reason)
+- Full palette (primary steps, secondary deep green, surfaces, muted text, chrome, semantics, calm risk colours, chart series)
+- `color-mode: light-only`
+- Inter type scale + mono stack + `@expo-google-fonts/inter`
+- Iconography: Ionicons outline/filled with labels
+- Illustration / photography / brand motif: **none**
+- Elevation float shadow tinted with ink
 
 ---
 
@@ -1024,29 +991,12 @@ Unlike TPM, **do not show a rotate-upright shopping block**. A user checking a h
 
 ```
 Product:          9ja Health (brand NOT malaria-specific)
-Category:         AI-powered health & environmental intelligence
-Initial focus:    Malaria — AREA-LEVEL annual incidence, never personal risk
-Market:           Nigeria (state/region from foreground GPS, manual fallback)
-Platform:         React Native + Expo + TypeScript — mobile app, portrait-first
-Core promise:     Understand your environment. Stay informed. Make better health decisions.
-Pipeline:         Location → Climate → ML → Intelligence → Prevention → Trusted info
-Feel:             Calm, clear, trustworthy, plain-language, non-alarmist daily companion
-Navigation:       Bottom tabs — Home · Outlook · Prevention · Assistant · Updates (+ Settings via header)
-Screens:          Dashboard / Outlook detail / Prevention / Assistant / Updates / Settings
-Trust pattern:    Source + timestamp on every claim; disclaimer in context, never buried
-Safety:           Information, not diagnosis; no prescription/dosage; seek-care escalation
-Accounts:         Not required for MVP
-Tracking:         Foreground location only, no continuous/background tracking
-Spacing:          8px base · 16px phone gutter · 44px min touch / 48px primary
-Shape:            All-rounded — buttons/chips pill 9999px; cards 16–24px; sheets/modals 24–32px
-Chart:            Soft area-line + text summary; horizontal grid; chart-series colours BLANK
-Motion:           quiet-settle · soft-pulse skeletons · L→R chart draw once · ease-out
-Haptics/sound:    Selective light haptics · silent UI (no sounds)
-Prevention groups: Around the home · When sleeping · Out and about · If someone feels unwell
-Landscape:        Allowed — health info never blocked by a rotate notice
-Colour:           BLANK — TODO (all tokens, risk mapping, colour-mode) §2/§15A
-Typography:       BLANK — TODO (families, import, full scale) §3/§15B
-Logo/icons/art:   BLANK — TODO (logo, app icon, splash, iconography, imagery, motif) §5/§15C
-Assets folder:    BLANK — TODO (create when brand assets exist)
+Colour:           primary #7DBA84 · canvas #F5ECD4 · ink #232323 · secondary #3D6B45
+                  surfaces #FFFDF8 / #EDE4C9 · risk calm greens→ambers→muted brick
+Font:             Inter (400/500/600) — wired via @expo-google-fonts/inter
+Shape:            All-rounded · Motion: quiet-settle · Haptics: selective light / silent
+Daily reports:    Backend scheduler @ 06:30 Africa/Lagos → AI → store → app (no Zapier)
+Logo:             Deferred — placeholder only under assets/brand/
+Mode:             Light only
 ```
 

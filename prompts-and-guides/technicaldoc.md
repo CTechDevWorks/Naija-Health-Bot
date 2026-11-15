@@ -34,7 +34,7 @@ The initial predictive focus is malaria, but the technical architecture must be 
 | Location | Expo Location |
 | AI Assistant | LLM + RAG |
 | Knowledge Sources | WHO + Nigerian public-health sources |
-| Automation | Zapier |
+| Daily health report | Backend scheduler @ 06:30 Africa/Lagos → AI request → store → mobile display |
 | API Communication | REST / JSON |
 | Validation | Pydantic + Zod |
 | Testing | Pytest + Jest |
@@ -615,6 +615,7 @@ backend/
   - prevention_service.py
   - rag_service.py
   - reports_service.py
+  - daily_report_scheduler.py
 - ml/
   - model.joblib
   - feature_builder.py
@@ -785,25 +786,32 @@ Emergency or severe symptoms should be handled with appropriate escalation guida
 
 ---
 
-# 39. Health Report Automation
+# 39. Daily Health Report Scheduler (Backend)
 
-**Technology:** Zapier
+**Technology:** FastAPI backend scheduler (e.g. APScheduler or equivalent lifespan/cron job)
 
-Zapier will automate the collection and processing of Nigerian health updates.
+There is **no Zapier**. The daily Nigerian health report is generated entirely on the backend.
 
-Potential flow:
+### Schedule
 
-**Health Source → Zapier → Filter → AI Processing → Backend → App**
+- **Time:** 06:30am
+- **Timezone:** `Africa/Lagos` (Nigeria local time)
+- **Frequency:** Once per day
 
-The automation can:
+### Flow
 
-- detect new health updates
-- extract article information
-- summarize content
-- classify topic
-- identify location
-- identify urgency
-- send structured data to the backend
+**Backend clock check → 06:30 trigger → Specific AI request → Structured answer → Persist on backend → Mobile app displays via reports API**
+
+The scheduled job should:
+
+1. Detect that it is 06:30 Africa/Lagos and that today's report has not already been generated.
+2. Send a **specific, fixed-purpose prompt/request** to the AI model (not an open-ended chat).
+3. Prefer grounding the answer in trusted Nigerian / WHO public-health sources (RAG where appropriate).
+4. Normalize the AI response into structured report fields.
+5. Store the result on the backend for the mobile app to fetch.
+6. Label AI-generated content clearly and never invent sources or health facts.
+
+The job must be idempotent for a given calendar day (safe if the process restarts).
 
 ---
 
@@ -993,7 +1001,7 @@ Examples:
 - LLM keys
 - backend URLs
 - database credentials
-- Zapier webhook secrets
+- Scheduler / internal job secrets if any
 
 Development:
 
@@ -1218,7 +1226,7 @@ The application must handle:
 - model unavailable
 - backend unavailable
 - AI provider unavailable
-- Zapier failure
+- Daily report scheduler failure
 - malformed data
 
 The user should receive useful fallback states instead of raw errors.
@@ -1354,9 +1362,9 @@ Provide local health information.
 
 Provides the AI assistant capability.
 
-### Zapier
+### Backend daily report scheduler
 
-Automates health-information ingestion.
+Runs at 06:30 Africa/Lagos, requests a daily health-report answer from the AI, stores it for the app.
 
 ---
 
@@ -1380,13 +1388,14 @@ The MVP should deliberately avoid unnecessary complexity.
 - geoBoundaries
 - RAG
 - LLM
-- Zapier
+- Backend 06:30 daily health-report scheduler
 - Git/GitHub
 
 ### Useful but optional
 
 - TanStack Query
 - Zod
+- APScheduler (or equivalent) for the 06:30 daily report job
 - XGBoost
 - SHAP
 - PostgreSQL/Supabase
@@ -1395,6 +1404,7 @@ The MVP should deliberately avoid unnecessary complexity.
 
 ### Avoid unless required
 
+- Zapier or other external workflow automation platforms
 - complex authentication
 - social features
 - background GPS
@@ -1575,9 +1585,9 @@ LLM + WHO + Nigerian health sources
 
 ↓
 
-### Health Reports
+### Daily Health Reports
 
-Zapier + Nigerian health sources
+Backend scheduler (06:30) + AI request + Nigerian / WHO health sources
 
 ↓
 
@@ -1603,9 +1613,9 @@ Each technology has a defined role:
 
 **Rules** turn environmental information into practical prevention reminders.
 
-**RAG + LLM** explains health information using trusted sources.
+**RAG + LLM** explains health information using trusted sources, and answers the scheduled daily-report request.
 
-**Zapier** keeps Nigerian health information fresh.
+**Backend scheduler** keeps the daily Nigerian health report fresh by running at 06:30 Africa/Lagos — no Zapier.
 
 **FastAPI** connects everything.
 

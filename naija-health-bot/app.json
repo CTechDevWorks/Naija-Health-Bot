@@ -1,36 +1,38 @@
 {
   "expo": {
-    "name": "naija-health-bot",
+    "name": "9ja Health",
     "slug": "naija-health-bot",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
-    "scheme": "naijahealthbot",
-    "userInterfaceStyle": "automatic",
+    "icon": "./assets/brand/logo-placeholder.jpeg",
+    "scheme": "naijahealth",
+    "userInterfaceStyle": "light",
     "ios": {
-      "icon": "./assets/expo.icon"
+      "supportsTablet": true
     },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
-        "foregroundImage": "./assets/images/android-icon-foreground.png",
-        "backgroundImage": "./assets/images/android-icon-background.png",
-        "monochromeImage": "./assets/images/android-icon-monochrome.png"
+        "backgroundColor": "#F5ECD4",
+        "foregroundImage": "./assets/brand/logo-placeholder.jpeg"
       },
       "predictiveBackGestureEnabled": false
     },
     "web": {
-      "output": "server",
-      "favicon": "./assets/images/favicon.png"
+      "output": "static",
+      "favicon": "./assets/brand/logo-placeholder.jpeg"
     },
     "plugins": [
       "expo-router",
       [
         "expo-splash-screen",
         {
-          "backgroundColor": "#208AEF",
-          "image": "./assets/images/splash-icon.png",
-          "imageWidth": 76
+          "backgroundColor": "#F5ECD4"
+        }
+      ],
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Allow 9ja Health to use your location to show the health outlook for your area. You can choose your state manually instead."
         }
       ]
     ],
