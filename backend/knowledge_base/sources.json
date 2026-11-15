@@ -1,0 +1,30 @@
+[
+  {
+    "id": "who-malaria",
+    "title": "Malaria fact sheet",
+    "organisation": "World Health Organization",
+    "url": "https://www.who.int/news-room/fact-sheets/detail/malaria",
+    "covers": "how malaria spreads, symptoms, who is most at risk, prevention, testing and treatment in general terms"
+  },
+  {
+    "id": "who-healthy-diet",
+    "title": "Healthy diet fact sheet",
+    "organisation": "World Health Organization",
+    "url": "https://www.who.int/news-room/fact-sheets/detail/healthy-diet",
+    "covers": "balanced eating, fruit and vegetables, salt, sugars and fats"
+  },
+  {
+    "id": "who-physical-activity",
+    "title": "Physical activity fact sheet",
+    "organisation": "World Health Organization",
+    "url": "https://www.who.int/news-room/fact-sheets/detail/physical-activity",
+    "covers": "why movement matters and general activity guidance"
+  },
+  {
+    "id": "ncdc",
+    "title": "Nigeria Centre for Disease Control and Prevention",
+    "organisation": "NCDC",
+    "url": "https://ncdc.gov.ng/",
+    "covers": "Nigerian disease outbreak updates, public-health advisories and national guidance"
+  }
+]

@@ -49,8 +49,10 @@ the current native icon/splash assets are inherited Expo placeholders.
 
 ## Prototype boundaries and safety
 
-- **No FastAPI, ML, RAG, LLM, live weather, Zapier ingestion or push service is
-  connected.** Those remain future work; see the original technical brief.
+- **The mobile app is not connected to any backend.** No ML, RAG, live weather,
+  Zapier ingestion or push service exists yet; see the original technical brief.
+  A FastAPI AI assistant service now lives in `backend/` (see below), but the app
+  does not call it yet.
 - Chat uses `src/services/demoAssistant.ts`: explicit curated examples, not AI.
   Unsupported questions are acknowledged rather than answered speculatively.
 - Sample replies and educational content have visible source links/content dates.
@@ -103,6 +105,26 @@ interaction checks covered all seven routes at 320, 390, 768 and 1440px, plus
 130% text sizing and landscape chat. Native iOS/Android device or simulator testing
 has not been performed; it is required before native distribution.
 
+### Backend (AI assistant)
+
+`backend/` is a FastAPI service that answers assistant questions through an LLM
+provider, with server-side guardrails. It needs Python 3 and a BluesMinds API key
+in `backend/.env` (copy `backend/.env.example`). The key stays on the server.
+
+```sh
+cd backend
+python -m venv .venv
+.venv\Scripts\activate        # macOS/Linux: source .venv/bin/activate
+pip install -r requirements-dev.txt
+uvicorn main:app --reload --port 8000
+pytest
+```
+
+Endpoints: `GET /api/v1/health` and `POST /api/v1/chat`; interactive docs at
+`/docs`. There is no retrieval (RAG) yet: answers come from the model, and the
+sources returned are pointers to the approved list in
+`backend/knowledge_base/sources.json`, not proof the answer was checked against them.
+
 ### Figma Make preview and publishing verification
 
 Root `.figma/make/install` runs `npm ci` in the nested app.
@@ -130,6 +152,15 @@ naija-health-bot/
   src/hooks/              Session-only prototype state
   src/services/           Explicit demo response selection, not an AI integration
   tests/                  Safety/boundary regression tests for the prototype
+backend/                   FastAPI AI assistant service (not yet called by the app)
+  api/                    Routes
+  services/               Chat pipeline and approved-source handling
+  ai/                     LLM provider adapter
+  guardrails/             Input and output safety checks
+  auth/                   Optional token check and rate limiting
+  prompts/                Assistant system prompt
+  knowledge_base/         Approved source list
+  tests/                  Guardrail, source and API tests
 prompts-and-guides/        Product, engineering, architecture and design authority
 .figma/make/               Hosted lifecycle and deployment configuration
 ```

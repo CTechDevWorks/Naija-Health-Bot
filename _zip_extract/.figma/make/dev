@@ -1,6 +1,0 @@
-#!/usr/bin/env bash
-set -euo pipefail
-
-cd naija-health-bot
-unset CI
-exec npx expo start --web --port "$PORT" --host lan
