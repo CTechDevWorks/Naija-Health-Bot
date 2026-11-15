@@ -13,28 +13,32 @@ import {
 } from "@/components/healthUi";
 import { HealthIcon } from "@/components/healthIcon";
 import { WeatherStrip } from "@/components/weatherStrip";
-import { usePrototype } from "@/hooks/usePrototype";
+import { useEnvironment } from "@/hooks/useEnvironment";
 import { sources } from "@/constants/healthContent";
 
 export default function OutlookScreen() {
-  const { state } = usePrototype();
+  const { state, source, weather } = useEnvironment();
+  const area = state ?? "your area";
+  const locationLine = state
+    ? `${state}, Nigeria · ${source === "gps" ? "GPS" : source === "manual" ? "Manual" : "Location"}`
+    : "Location not set yet";
   return (
-    <Screen
-      title="Your local outlook"
-      subtitle={`${state}, Nigeria · Manual selection`}
-    >
+    <Screen title="Your local outlook" subtitle={locationLine}>
       <Card soft>
-        <Badge>PREVIEW · NO LIVE PREDICTION</Badge>
+        <Badge>
+          {weather ? "LIVE WEATHER · OUTLOOK COMING" : "WAITING FOR LOCATION"}
+        </Badge>
         <AppText variant="title" tone="forest">
           The bigger picture.{"\n"}Not a personal diagnosis.
         </AppText>
         <AppText tone="body">
-          A future outlook will connect local environmental conditions with
-          area-level annual malaria estimates.
+          {weather
+            ? `Right now in ${area}: ${weather.summary.toLowerCase()}, ${weather.temperatureC}°C, ${weather.humidityPct}% humidity, ${weather.rainfallMm} mm rain today.`
+            : "Local weather appears once location is ready. Area-level malaria estimates will connect next."}
         </AppText>
         <AppText variant="small" tone="body">
-          No model is connected, so we cannot show an estimate, category or
-          prediction period for {state}.
+          No malaria model is connected yet, so we cannot show an incidence
+          estimate, category or prediction period for {area}.
         </AppText>
       </Card>
       <View style={ui.stack}>
@@ -75,9 +79,9 @@ export default function OutlookScreen() {
       <Card>
         <AppText variant="subheading">Built on transparency</AppText>
         <AppText tone="body">
-          Planned sources: Malaria Atlas Project and Open-Meteo. Model outputs,
-          dates, training periods and limitations will be shown when those
-          services are integrated.
+          Weather: Open-Meteo. Planned malaria sources: Malaria Atlas Project.
+          Model outputs, dates, training periods and limitations will be shown
+          when those services are integrated.
         </AppText>
         <SourceLink title="Learn about malaria · WHO" url={sources.malaria} />
       </Card>

@@ -53,8 +53,9 @@ the current native icon/splash assets are inherited Expo placeholders.
   Zapier ingestion or push service exists yet; see the original technical brief.
   A FastAPI AI assistant service now lives in `backend/` (see below), but the app
   does not call it yet.
-- Chat uses `src/services/demoAssistant.ts`: explicit curated examples, not AI.
-  Unsupported questions are acknowledged rather than answered speculatively.
+- The Assistant screen calls `backend` via `EXPO_PUBLIC_API_BASE_URL`
+  (`src/services/assistantApi.ts`). Set that in `naija-health-bot/.env` and
+  restart Expo after changing it.
 - Sample replies and educational content have visible source links/content dates.
   Dates identify prototype content, not source publication or live verification.
   Medical copy needs qualified review before release.

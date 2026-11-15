@@ -17,4 +17,6 @@ def health() -> HealthResponse:
         provider="bluesminds",
         model=settings.model,
         configured=bool(settings.bluesminds_api_key),
+        accounts=settings.accounts_configured,
+        rag=settings.rag_configured,
     )

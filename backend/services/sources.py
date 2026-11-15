@@ -7,9 +7,9 @@ as `Sources: who-malaria, ncdc`. This module reads that line, keeps only ids
 that are on the list, and removes any link in the answer that is not on it — so
 an invented source can never reach the user.
 
-Limit worth knowing: nothing is retrieved from these sources yet (no RAG). A
-returned source means "the model pointed to this approved page", not "this
-answer was checked against that page".
+When RAG is on, returned sources come from the passages that were retrieved for
+the question. When RAG is off, a returned source only means the model pointed at
+an approved page — not that the answer was checked against that page.
 """
 
 from __future__ import annotations

@@ -1,4 +1,5 @@
 import { ComponentRef, useEffect, useRef, useState } from "react";
+import { router } from "expo-router";
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
@@ -27,12 +28,28 @@ import {
   typography,
 } from "@/constants/designTokens";
 import { starters } from "@/constants/healthContent";
+import { SavedConversations } from "@/components/savedConversations";
+import { useAuth } from "@/hooks/useAuth";
 import { usePrototype } from "@/hooks/usePrototype";
 
 export default function AssistantScreen() {
-  const { messages, busy, send, clearChat } = usePrototype();
+  const {
+    messages,
+    busy,
+    send,
+    clearChat,
+    assistantOnline,
+    unsaved,
+    conversationId,
+  } = usePrototype();
+  const { status } = useAuth();
+  const signedIn = status === "ready";
+  // Sign-in is offered, but this person is a guest or part-way through it.
+  const canSignIn =
+    status === "guest" || status === "enrol" || status === "challenge";
   const [draft, setDraft] = useState("");
   const [confirm, setConfirm] = useState(false);
+  const [historyOpen, setHistoryOpen] = useState(false);
   const [focused, setFocused] = useState(false);
   const list = useRef<ComponentRef<typeof ScrollView>>(null);
   useEffect(() => {
@@ -62,6 +79,13 @@ export default function AssistantScreen() {
             A safe space for everyday questions
           </AppText>
         </View>
+        {signedIn && (
+          <IconButton
+            icon="history"
+            label="Saved conversations"
+            onPress={() => setHistoryOpen(true)}
+          />
+        )}
         <IconButton
           icon="plus"
           label="Start a new conversation"
@@ -71,10 +95,26 @@ export default function AssistantScreen() {
       <View style={styles.scope}>
         <HealthIcon name="info" size={layout.smallIcon} />
         <AppText variant="caption" tone="body" style={ui.flex}>
-          Demo mode · Prepared examples, not live AI. Information, never a
-          diagnosis.
+          {assistantOnline
+            ? "Live assistant · Malaria information only, never a diagnosis."
+            : "Assistant offline · Set EXPO_PUBLIC_API_BASE_URL and restart Expo."}
         </AppText>
       </View>
+      {canSignIn && (
+        <Pressable
+          accessibilityRole="link"
+          onPress={() => router.push("/account")}
+          style={({ pressed }) => [styles.signIn, pressed && ui.pressed]}
+        >
+          <HealthIcon name="lock" size={layout.smallIcon} />
+          <AppText variant="caption" tone="forest" style={ui.flex}>
+            {status === "guest"
+              ? "Sign in to save your conversations. Optional."
+              : "Finish two-factor sign-in to save your conversations."}
+          </AppText>
+          <HealthIcon name="chevron" size={layout.smallIcon} />
+        </Pressable>
+      )}
       <ScrollView
         ref={list}
         style={ui.flex}
@@ -120,7 +160,13 @@ export default function AssistantScreen() {
         ) : (
           <>
             <AppText variant="caption" tone="body" style={styles.center}>
-              This session · Conversations are not saved
+              {!signedIn
+                ? "This session · Conversations are not saved"
+                : unsaved
+                  ? "The latest reply could not be saved to your account"
+                  : conversationId
+                    ? "Saved to your account"
+                    : "Signed in · This conversation will be saved"}
             </AppText>
             {messages.map((message) => (
               <View
@@ -148,7 +194,9 @@ export default function AssistantScreen() {
                   <View style={ui.row}>
                     <HealthIcon name="sparkle" size={layout.smallIcon} />
                     <AppText variant="label" tone="forest">
-                      9ja Health · Prepared demo
+                      {message.reply?.error
+                        ? "9ja Health · Couldn’t answer"
+                        : "9ja Health · Assistant"}
                     </AppText>
                   </View>
                 )}
@@ -162,20 +210,18 @@ export default function AssistantScreen() {
                 >
                   <AppText>{message.text}</AppText>
                 </View>
-                {message.reply?.source && (
+                {!!message.reply?.sources?.length && (
                   <View style={styles.source}>
-                    {message.reply.url ? (
+                    {message.reply.sources.map((source) => (
                       <SourceLink
-                        title={message.reply.source}
-                        url={message.reply.url}
+                        key={source.id}
+                        title={`${source.organisation} · ${source.title}`}
+                        url={source.url}
                       />
-                    ) : (
-                      <AppText variant="caption" tone="body">
-                        {message.reply.source}
-                      </AppText>
-                    )}
+                    ))}
                     <AppText variant="caption" tone="body">
-                      Demo content · {message.reply.date}
+                      Linked sources for further reading · not a live check of
+                      this answer
                     </AppText>
                   </View>
                 )}
@@ -188,7 +234,7 @@ export default function AssistantScreen() {
               <View accessibilityLiveRegion="polite" style={styles.typing}>
                 <ActivityIndicator size="small" color={palette.forest} />
                 <AppText variant="small" tone="body">
-                  Preparing a demo response…
+                  Thinking…
                 </AppText>
               </View>
             )}
@@ -238,8 +284,9 @@ export default function AssistantScreen() {
         onClose={() => setConfirm(false)}
       >
         <AppText tone="body">
-          This will clear your current conversation. Messages are only held in
-          this session and cannot be recovered.
+          {signedIn
+            ? "This starts a new conversation. The current one stays in your saved conversations."
+            : "This will clear your current conversation. Messages are only held in this session and cannot be recovered."}
         </AppText>
         <Button
           onPress={() => {
@@ -252,6 +299,16 @@ export default function AssistantScreen() {
         <Button secondary onPress={() => setConfirm(false)}>
           Keep this conversation
         </Button>
+      </Sheet>
+      <Sheet
+        visible={historyOpen}
+        title="Saved conversations"
+        onClose={() => setHistoryOpen(false)}
+      >
+        {/* Mounted only while open, so the list is fresh each time. */}
+        {historyOpen && (
+          <SavedConversations onOpened={() => setHistoryOpen(false)} />
+        )}
       </Sheet>
     </KeyboardAvoidingView>
   );
@@ -279,6 +336,18 @@ const styles = StyleSheet.create({
     marginHorizontal: space.lg,
     gap: space.sm,
     alignItems: "center",
+    borderRadius: radius.sm,
+  },
+  signIn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: space.sm,
+    minHeight: layout.touch,
+    paddingHorizontal: space.md,
+    marginHorizontal: space.lg,
+    marginTop: space.sm,
+    borderWidth: layout.line,
+    borderColor: palette.line,
     borderRadius: radius.sm,
   },
   messages: { padding: space.lg, gap: space.xl, flexGrow: 1 },

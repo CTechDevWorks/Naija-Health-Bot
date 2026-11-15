@@ -1,0 +1,189 @@
+[
+  {
+    "id": "who-malaria",
+    "title": "Malaria fact sheet",
+    "organisation": "World Health Organization",
+    "url": "https://www.who.int/news-room/fact-sheets/detail/malaria",
+    "published": "2025-12-04",
+    "evidence_type": "WHO fact sheet",
+    "link_status": "ok",
+    "checked_on": "2026-11-15",
+    "covers": "how malaria spreads, symptoms, danger signs, who is most at risk, prevention, testing, treatment in general terms, vaccines, global and African figures"
+  },
+  {
+    "id": "who-malaria-qa",
+    "title": "Malaria: questions and answers",
+    "organisation": "World Health Organization",
+    "url": "https://www.who.int/news-room/questions-and-answers/item/malaria",
+    "published": "2025-12-04",
+    "evidence_type": "WHO questions and answers",
+    "link_status": "ok",
+    "checked_on": "2026-11-15",
+    "covers": "what malaria is, transmission, immunity, symptoms, testing, ACT treatment, travel, prevention, vaccines"
+  },
+  {
+    "id": "who-afro-malaria",
+    "title": "Malaria (WHO African Region)",
+    "organisation": "World Health Organization Regional Office for Africa",
+    "url": "https://www.afro.who.int/health-topics/malaria",
+    "published": "",
+    "evidence_type": "WHO regional topic page",
+    "link_status": "ok",
+    "checked_on": "2026-11-15",
+    "covers": "malaria in the African Region, regional programmes and updates"
+  },
+  {
+    "id": "who-malaria-vaccines-qa",
+    "title": "Malaria vaccines (RTS,S and R21)",
+    "organisation": "World Health Organization",
+    "url": "https://www.who.int/news-room/questions-and-answers/item/q-a-on-rts-s-malaria-vaccine",
+    "published": "",
+    "evidence_type": "WHO questions and answers",
+    "link_status": "ok",
+    "checked_on": "2026-11-15",
+    "covers": "RTS,S and R21 vaccines, age and dose schedule, safety, efficacy, use alongside nets and other prevention"
+  },
+  {
+    "id": "who-lsm-manual",
+    "title": "Operational manual on larval source management: control of Anopheles and Aedes mosquito vectors",
+    "organisation": "World Health Organization",
+    "url": "https://www.who.int/publications/i/item/9789240123212",
+    "published": "2026-06-21",
+    "evidence_type": "WHO operational manual",
+    "link_status": "ok",
+    "checked_on": "2026-11-15",
+    "covers": "larval source management, container and waste management, environmental measures, larviciding by programmes, Anopheles and Aedes breeding sites"
+  },
+  {
+    "id": "who-housing-vector",
+    "title": "Keeping the vector out: housing improvements for vector control and sustainable development",
+    "organisation": "World Health Organization",
+    "url": "https://www.who.int/publications/i/item/9789241513166",
+    "published": "",
+    "evidence_type": "WHO publication",
+    "link_status": "ok",
+    "checked_on": "2026-11-15",
+    "covers": "housing improvements that keep mosquitoes out, screens, eaves and related household measures"
+  },
+  {
+    "id": "who-nga-malaria-profile-2024",
+    "title": "Malaria country profile: Nigeria (2024)",
+    "organisation": "World Health Organization",
+    "url": "https://cdn.who.int/media/docs/default-source/country-profiles/malaria/malaria-2024-nga.pdf?sfvrsn=36053941_4&download=true",
+    "published": "2024",
+    "evidence_type": "WHO World malaria report country profile",
+    "link_status": "ok",
+    "checked_on": "2026-11-15",
+    "covers": "Nigeria malaria burden estimates, parasites and mosquito species, national policy summary for nets, spraying, prevention in pregnancy, testing and ACT"
+  },
+  {
+    "id": "who-r21-nigeria",
+    "title": "Nigeria introduces R21 vaccine in a pivotal move for malaria control",
+    "organisation": "World Health Organization Regional Office for Africa",
+    "url": "https://www.afro.who.int/countries/nigeria/news/nigeria-introduces-r21-vaccine-pivotal-move-malaria-control",
+    "published": "",
+    "evidence_type": "WHO regional news",
+    "link_status": "ok",
+    "checked_on": "2026-11-15",
+    "covers": "introduction of the R21 malaria vaccine in Nigeria"
+  },
+  {
+    "id": "nmep-strategic-plan-2021-2025",
+    "title": "National Malaria Strategic Plan 2021-2025",
+    "organisation": "National Malaria Elimination Programme, Federal Ministry of Health, Nigeria",
+    "url": "https://nmep.gov.ng/downloads/27",
+    "published": "2020-10",
+    "evidence_type": "Nigerian national strategy",
+    "link_status": "ok",
+    "checked_on": "2026-11-15",
+    "covers": "malaria parasites and mosquitoes in Nigeria, rainfall and transmission seasons, 2018 survey figures, national prevention, testing and treatment strategy"
+  },
+  {
+    "id": "nmep-ivm",
+    "title": "Integrated Vector Management",
+    "organisation": "National Malaria Elimination Programme, Nigeria",
+    "url": "https://nmcp.gov.ng/integrated-vector-management/",
+    "published": "",
+    "evidence_type": "Nigerian national programme web page",
+    "link_status": "ok",
+    "checked_on": "2026-11-15",
+    "covers": "Nigeria's mosquito control strategy, stagnant water and Anopheles larvae, larviciding, ministries involved"
+  },
+  {
+    "id": "napharm-vaccines-nigeria",
+    "title": "Malaria vaccines in Nigeria: the RTS,S and R21 rollout",
+    "organisation": "Nigeria Academy of Pharmacy",
+    "url": "https://www.napharm.org/resources/articles/malaria-vaccines-nigeria-rts-s-r21-rollout",
+    "published": "2026-03-03",
+    "evidence_type": "Professional association article",
+    "link_status": "ok",
+    "checked_on": "2026-11-15",
+    "covers": "RTS,S and R21 schedules and Nigeria's subnational vaccine introduction"
+  },
+  {
+    "id": "plos-anopheles-nigeria",
+    "title": "Nigeria Anopheles vector database: an overview of 100 years' research",
+    "organisation": "PLOS ONE",
+    "url": "https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0028347",
+    "published": "2011",
+    "evidence_type": "Peer-reviewed study",
+    "link_status": "ok",
+    "checked_on": "2026-11-15",
+    "covers": "Anopheles mosquitoes that transmit malaria in Nigeria; other mosquito genera such as Culex are discussed for other diseases"
+  },
+  {
+    "id": "msd-malaria",
+    "title": "Malaria",
+    "organisation": "MSD Manual Professional Edition",
+    "url": "https://www.msdmanuals.com/professional/infectious-diseases/extraintestinal-protozoa/malaria",
+    "published": "",
+    "evidence_type": "Clinical reference",
+    "link_status": "ok",
+    "checked_on": "2026-11-15",
+    "covers": "life cycle after a bite, symptoms, diagnosis overview; do not copy dosing or named drug regimens into user-facing text"
+  },
+  {
+    "id": "rti-safian-fever",
+    "title": "RTI study identifies hidden fever pathogens in Nigeria (SAFIAN)",
+    "organisation": "RTI International",
+    "url": "https://www.rti.org/announcements/nigeria-fever-pathogens-revealed-safian-study",
+    "published": "",
+    "evidence_type": "Research announcement",
+    "link_status": "ok",
+    "checked_on": "2026-11-15",
+    "covers": "many different pathogens found in people with acute fever in Nigeria; coinfections were common"
+  },
+  {
+    "id": "bakare-2026-adamawa",
+    "title": "Modelling the association of rainfall and temperature with malaria incidence in Adamawa State, Nigeria",
+    "organisation": "Scientific Reports (Nature Portfolio)",
+    "url": "https://www.nature.com/articles/s41598-026-38705-2",
+    "published": "2026-02",
+    "evidence_type": "Peer-reviewed study",
+    "link_status": "ok",
+    "checked_on": "2026-11-15",
+    "covers": "how rainfall and temperature relate to malaria cases in Adamawa State only"
+  },
+  {
+    "id": "worldbank-malaria-incidence",
+    "title": "Incidence of malaria (per 1,000 population at risk): indicator definition",
+    "organisation": "World Bank DataBank, from WHO Global Health Observatory data",
+    "url": "https://databank.worldbank.org/metadataglossary/world-development-indicators/series/SH.MLR.INCD.P3",
+    "published": "",
+    "evidence_type": "Indicator definition",
+    "link_status": "ok",
+    "checked_on": "2026-11-15",
+    "covers": "the definition of malaria incidence"
+  },
+  {
+    "id": "ncdc",
+    "title": "Nigeria Centre for Disease Control and Prevention",
+    "organisation": "NCDC",
+    "url": "https://ncdc.gov.ng/",
+    "published": "",
+    "evidence_type": "National public-health authority",
+    "link_status": "ok",
+    "checked_on": "2026-11-15",
+    "covers": "Nigerian disease outbreak updates and public-health advisories"
+  }
+]

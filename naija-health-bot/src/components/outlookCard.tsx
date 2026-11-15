@@ -1,16 +1,19 @@
 import { StyleSheet, View, Pressable } from "react-native";
 import { router } from "expo-router";
+
 import { layout, palette, radius, space } from "@/constants/designTokens";
-import { usePrototype } from "@/hooks/usePrototype";
+import { useEnvironment } from "@/hooks/useEnvironment";
 import { AppText, Badge, ui } from "./healthUi";
 import { HealthIcon } from "./healthIcon";
 
 export function OutlookCard() {
-  const { state } = usePrototype();
+  const { state, weather, source, status } = useEnvironment();
+  const area = state ?? "your area";
+
   return (
     <Pressable
       accessibilityRole="button"
-      accessibilityLabel={`View the demo health outlook for ${state}`}
+      accessibilityLabel={`View the health outlook for ${area}`}
       onPress={() => router.push("/outlook")}
       style={({ pressed }) => [styles.card, pressed && ui.pressed]}
     >
@@ -19,19 +22,29 @@ export function OutlookCard() {
         <HealthIcon name="outlook" />
       </View>
       <AppText variant="title" tone="forest">
-        A little awareness.{"\n"}A healthier everyday.
+        {weather
+          ? `${weather.summary} in ${area}.`
+          : status === "loading"
+            ? "Checking your area…"
+            : `Health context for ${area}.`}
       </AppText>
       <AppText tone="body">
-        Understand your environment and the small steps that help you stay well.
+        {weather
+          ? `${weather.temperatureC}°C · ${weather.humidityPct}% humidity · ${weather.rainfallMm} mm rain today. Small prevention steps still help.`
+          : "Understand your environment and the small steps that help you stay well."}
       </AppText>
       <View style={styles.rule} />
       <View style={ui.sectionHeading}>
         <View style={ui.smallStack}>
           <AppText variant="label" tone="forest">
-            {state} · Demo preview
+            {state
+              ? `${state} · ${source === "gps" ? "GPS" : source === "manual" ? "Manual" : "Location"}`
+              : "Location needed"}
           </AppText>
           <AppText variant="caption" tone="body">
-            No live area-level estimate available
+            {weather
+              ? "Live weather connected · Area-level malaria outlook coming next"
+              : "Live weather will appear once location is ready"}
           </AppText>
         </View>
         <View style={styles.arrow}>
@@ -44,6 +57,7 @@ export function OutlookCard() {
     </Pressable>
   );
 }
+
 const styles = StyleSheet.create({
   card: {
     backgroundColor: palette.cream,

@@ -4,6 +4,8 @@ import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
 import { useEffect } from "react";
 import AppTabs from "@/components/app-tabs";
+import { AuthProvider } from "@/hooks/useAuth";
+import { EnvironmentProvider } from "@/hooks/useEnvironment";
 import { PrototypeProvider } from "@/hooks/usePrototype";
 import { palette } from "@/constants/designTokens";
 import "@/global.css";
@@ -31,10 +33,14 @@ export default function RootLayout() {
   if (!loaded && !error) return null;
   return (
     <ThemeProvider value={theme}>
-      <PrototypeProvider>
-        <StatusBar style="dark" />
-        <AppTabs />
-      </PrototypeProvider>
+      <AuthProvider>
+        <EnvironmentProvider>
+          <PrototypeProvider>
+            <StatusBar style="dark" />
+            <AppTabs />
+          </PrototypeProvider>
+        </EnvironmentProvider>
+      </AuthProvider>
     </ThemeProvider>
   );
 }

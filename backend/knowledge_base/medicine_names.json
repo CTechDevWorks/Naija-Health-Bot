@@ -1,0 +1,25 @@
+{
+  "_about": "Medicine names the assistant must not name in an answer unless the knowledge passage it is answering from names them. Artemisinin-based combination therapy (ACT) is deliberately not listed: the knowledge base names it as the WHO-recommended treatment. Lower case. Matched as whole words. Add names as they come up; a name missing from this list is not caught.",
+  "antimalarials": [
+    "chloroquine", "hydroxychloroquine", "quinine", "artemether", "lumefantrine",
+    "artesunate", "amodiaquine", "dihydroartemisinin", "piperaquine", "pyronaridine",
+    "mefloquine", "primaquine", "tafenoquine", "atovaquone", "proguanil",
+    "doxycycline", "sulfadoxine", "pyrimethamine", "halofantrine"
+  ],
+  "antimalarial_brands": [
+    "coartem", "lonart", "amatem", "lumartem", "lokmal", "larimal", "artequin",
+    "camosunate", "combisunate", "p-alaxin", "palaxin", "fansidar", "amalar",
+    "maloxine", "malareich", "malarone", "lariam", "nivaquine", "camoquin"
+  ],
+  "fever_and_pain": [
+    "paracetamol", "acetaminophen", "panadol", "ibuprofen", "aspirin", "diclofenac",
+    "piroxicam", "felvin", "naproxen", "tramadol", "codeine", "boska", "alabukun"
+  ],
+  "antibiotics_and_others": [
+    "amoxicillin", "amoxil", "augmentin", "ampiclox", "ampicillin", "cloxacillin",
+    "ciprofloxacin", "ciprotab", "flagyl", "metronidazole", "azithromycin",
+    "erythromycin", "tetracycline", "septrin", "cotrimoxazole", "co-trimoxazole",
+    "ceftriaxone", "chloramphenicol", "gentamicin", "piriton", "chlorpheniramine",
+    "ivermectin", "prednisolone", "dexamethasone"
+  ]
+}

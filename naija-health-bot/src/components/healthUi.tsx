@@ -15,7 +15,7 @@ import {
   ViewStyle,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { router } from "expo-router";
+import { Href, router } from "expo-router";
 import {
   layout,
   palette,
@@ -172,11 +172,14 @@ export function Screen({
   title,
   subtitle,
   back = false,
+  backTo = "/",
   trailing,
 }: PropsWithChildren<{
   title?: string;
   subtitle?: string;
   back?: boolean;
+  /** Where the back button goes. Home unless a screen says otherwise. */
+  backTo?: Href;
   trailing?: ReactNode;
 }>) {
   return (
@@ -191,8 +194,8 @@ export function Screen({
           {back && (
             <IconButton
               icon="back"
-              label="Back to Home"
-              onPress={() => router.replace("/")}
+              label={backTo === "/" ? "Back to Home" : "Back"}
+              onPress={() => router.replace(backTo)}
             />
           )}
           <View style={ui.flex}>
@@ -242,6 +245,38 @@ export function SearchField(props: TextInputProps) {
           label="Clear search"
           onPress={() => props.onChangeText?.("")}
         />
+      )}
+    </View>
+  );
+}
+/** A labelled text box for forms. Shows `error` underneath when there is one. */
+export function Field({
+  label,
+  hint,
+  error,
+  ...props
+}: TextInputProps & { label: string; hint?: string; error?: string }) {
+  const [focused, setFocused] = useState(false);
+  return (
+    <View style={ui.smallStack}>
+      <AppText variant="label">{label}</AppText>
+      <TextInput
+        {...props}
+        accessibilityLabel={props.accessibilityLabel || label}
+        placeholderTextColor={palette.body}
+        onFocus={() => setFocused(true)}
+        onBlur={() => setFocused(false)}
+        style={[typography.body, ui.field, focused && ui.focused]}
+      />
+      {!!hint && !error && (
+        <AppText variant="caption" tone="body">
+          {hint}
+        </AppText>
+      )}
+      {!!error && (
+        <AppText variant="caption" accessibilityRole="alert">
+          {error}
+        </AppText>
       )}
     </View>
   );
@@ -484,6 +519,15 @@ export const ui = StyleSheet.create({
   },
   focused: { borderColor: palette.forest },
   input: { paddingVertical: space.md, minWidth: 0 },
+  field: {
+    minHeight: layout.touch,
+    paddingVertical: space.md,
+    paddingHorizontal: space.lg,
+    borderRadius: radius.md,
+    borderWidth: layout.line,
+    borderColor: palette.line,
+    backgroundColor: palette.white,
+  },
   chip: {
     minHeight: layout.touch,
     paddingHorizontal: space.lg,

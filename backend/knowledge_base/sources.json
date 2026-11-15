@@ -4,27 +4,118 @@
     "title": "Malaria fact sheet",
     "organisation": "World Health Organization",
     "url": "https://www.who.int/news-room/fact-sheets/detail/malaria",
-    "covers": "how malaria spreads, symptoms, who is most at risk, prevention, testing and treatment in general terms"
+    "covers": "how malaria spreads, symptoms, danger signs, who is most at risk, prevention, testing, treatment in general terms, vaccines"
   },
   {
-    "id": "who-healthy-diet",
-    "title": "Healthy diet fact sheet",
+    "id": "who-malaria-qa",
+    "title": "Malaria: questions and answers",
     "organisation": "World Health Organization",
-    "url": "https://www.who.int/news-room/fact-sheets/detail/healthy-diet",
-    "covers": "balanced eating, fruit and vegetables, salt, sugars and fats"
+    "url": "https://www.who.int/news-room/questions-and-answers/item/malaria",
+    "covers": "what malaria is, transmission, immunity, symptoms, testing, ACT treatment, travel, prevention, vaccines"
   },
   {
-    "id": "who-physical-activity",
-    "title": "Physical activity fact sheet",
+    "id": "who-afro-malaria",
+    "title": "Malaria (WHO African Region)",
+    "organisation": "World Health Organization Regional Office for Africa",
+    "url": "https://www.afro.who.int/health-topics/malaria",
+    "covers": "malaria in the African Region, regional programmes and updates"
+  },
+  {
+    "id": "who-malaria-vaccines-qa",
+    "title": "Malaria vaccines (RTS,S and R21)",
     "organisation": "World Health Organization",
-    "url": "https://www.who.int/news-room/fact-sheets/detail/physical-activity",
-    "covers": "why movement matters and general activity guidance"
+    "url": "https://www.who.int/news-room/questions-and-answers/item/q-a-on-rts-s-malaria-vaccine",
+    "covers": "RTS,S and R21 vaccines, age and dose schedule, safety, efficacy, use alongside other prevention"
+  },
+  {
+    "id": "who-lsm-manual",
+    "title": "Operational manual on larval source management",
+    "organisation": "World Health Organization",
+    "url": "https://www.who.int/publications/i/item/9789240123212",
+    "covers": "larval source management, container and waste management, larviciding by programmes, mosquito breeding sites"
+  },
+  {
+    "id": "who-housing-vector",
+    "title": "Keeping the vector out: housing improvements for vector control",
+    "organisation": "World Health Organization",
+    "url": "https://www.who.int/publications/i/item/9789241513166",
+    "covers": "housing improvements that keep mosquitoes out, screens and related household measures"
+  },
+  {
+    "id": "who-nga-malaria-profile-2024",
+    "title": "Malaria country profile: Nigeria (2024)",
+    "organisation": "World Health Organization",
+    "url": "https://cdn.who.int/media/docs/default-source/country-profiles/malaria/malaria-2024-nga.pdf?sfvrsn=36053941_4&download=true",
+    "covers": "Nigeria malaria burden estimates, parasites and mosquito species, national policy summary"
+  },
+  {
+    "id": "who-r21-nigeria",
+    "title": "Nigeria introduces R21 vaccine in a pivotal move for malaria control",
+    "organisation": "World Health Organization Regional Office for Africa",
+    "url": "https://www.afro.who.int/countries/nigeria/news/nigeria-introduces-r21-vaccine-pivotal-move-malaria-control",
+    "covers": "introduction of the R21 malaria vaccine in Nigeria"
+  },
+  {
+    "id": "nmep-strategic-plan-2021-2025",
+    "title": "National Malaria Strategic Plan 2021-2025",
+    "organisation": "National Malaria Elimination Programme, Nigeria",
+    "url": "https://nmep.gov.ng/downloads/27",
+    "covers": "malaria parasites and mosquitoes in Nigeria, seasons, national prevention, testing and treatment strategy"
+  },
+  {
+    "id": "nmep-ivm",
+    "title": "Integrated Vector Management",
+    "organisation": "National Malaria Elimination Programme, Nigeria",
+    "url": "https://nmcp.gov.ng/integrated-vector-management/",
+    "covers": "Nigeria's mosquito control strategy, stagnant water and Anopheles larvae, larviciding"
+  },
+  {
+    "id": "napharm-vaccines-nigeria",
+    "title": "Malaria vaccines in Nigeria: the RTS,S and R21 rollout",
+    "organisation": "Nigeria Academy of Pharmacy",
+    "url": "https://www.napharm.org/resources/articles/malaria-vaccines-nigeria-rts-s-r21-rollout",
+    "covers": "RTS,S and R21 schedules and Nigeria's subnational vaccine introduction"
+  },
+  {
+    "id": "plos-anopheles-nigeria",
+    "title": "Nigeria Anopheles vector database",
+    "organisation": "PLOS ONE",
+    "url": "https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0028347",
+    "covers": "Anopheles mosquitoes that transmit malaria in Nigeria"
+  },
+  {
+    "id": "msd-malaria",
+    "title": "Malaria",
+    "organisation": "MSD Manual Professional Edition",
+    "url": "https://www.msdmanuals.com/professional/infectious-diseases/extraintestinal-protozoa/malaria",
+    "covers": "life cycle after a bite and clinical overview; not for medicine doses"
+  },
+  {
+    "id": "rti-safian-fever",
+    "title": "Hidden fever pathogens in Nigeria (SAFIAN study)",
+    "organisation": "RTI International",
+    "url": "https://www.rti.org/announcements/nigeria-fever-pathogens-revealed-safian-study",
+    "covers": "many different pathogens found in people with acute fever in Nigeria; coinfections were common"
+  },
+  {
+    "id": "bakare-2026-adamawa",
+    "title": "Rainfall, temperature and malaria incidence in Adamawa State, Nigeria",
+    "organisation": "Scientific Reports",
+    "url": "https://www.nature.com/articles/s41598-026-38705-2",
+    "covers": "how rainfall and temperature relate to malaria cases in Adamawa State only"
+  },
+  {
+    "id": "worldbank-malaria-incidence",
+    "title": "Incidence of malaria (per 1,000 population at risk)",
+    "organisation": "World Bank DataBank / WHO",
+    "url": "https://databank.worldbank.org/metadataglossary/world-development-indicators/series/SH.MLR.INCD.P3",
+    "covers": "the definition of malaria incidence"
   },
   {
     "id": "ncdc",
     "title": "Nigeria Centre for Disease Control and Prevention",
     "organisation": "NCDC",
     "url": "https://ncdc.gov.ng/",
-    "covers": "Nigerian disease outbreak updates, public-health advisories and national guidance"
+    "covers": "Nigerian disease outbreak updates and public-health advisories"
   }
 ]

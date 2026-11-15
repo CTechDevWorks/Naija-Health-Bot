@@ -637,17 +637,18 @@ Test:
 
 Work with the mobile developer to verify:
 
-- [ ] GPS request works
-- [ ] Permission denial works
-- [ ] Manual location fallback works
+- [x] ~~GPS request works~~ (mobile: expo-location + state resolve)
+- [x] ~~Permission denial works~~ (manual state fallback)
+- [x] ~~Manual location fallback works~~
 - [ ] Outlook endpoint works
-- [ ] Weather appears correctly
+- [x] ~~Weather appears correctly~~ (mobile: Open-Meteo current conditions)
 - [ ] ML prediction appears correctly
 - [ ] Prevention recommendations appear correctly
 - [ ] Assistant works
 - [ ] Health reports appear correctly
 - [ ] Backend errors are handled correctly
-- [ ] Loading states work correctly
+- [x] ~~Loading states work correctly~~ (location/weather strip)
+
 
 ---
 

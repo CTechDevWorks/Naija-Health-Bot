@@ -1,0 +1,158 @@
+# Environmental action rules (from report 2, sections 20 and 21)
+#
+# NOT for the RAG knowledge base. These are trigger -> action rules for the
+# prevention / risk feature, where the app decides which fixed message to show.
+# They are kept here, cleaned up, so the work is not lost.
+#
+# The plain-language household advice from these rules is also written up as
+# knowledge in documents/20-what-to-do-in-common-situations.md.
+#
+# Before any of this is used:
+#   - every threshold below is unverified. The research report gave numbers
+#     (for example 50 mm of rain in 24 hours, water within 50 m, more than
+#     3 days) with no source. They are placeholders until someone sets them
+#     from real guidance or your own data.
+#   - every evidence field needs a real source id from sources.json.
+#   - the messages need the same medical review as the knowledge documents.
+#
+# Removed from the original records because they were unsafe or unclear:
+#   - "add a small amount of sand or oil on top" of stored water
+#   - "consider pouring off a little before use"
+#   - using larvicide granules at home
+
+- id: recent_heavy_rain
+  trigger_type: weather
+  condition: "Heavy rainfall in the last 24 hours, or several rainy days in a row"
+  threshold: "rain_mm_24h >= 50 OR rainy_days >= 3"
+  threshold_status: unverified
+  interpretation: "New mosquito breeding sites are likely (puddles, flooded areas, filled containers)"
+  actions_household:
+    - "After the rain stops, empty, turn over or cover containers that collected water"
+    - "Clear gutters so water drains away"
+    - "Check mosquito nets for holes and make sure everyone sleeps under one"
+  actions_community:
+    - "Report large flooded areas that are not draining to the local government health or environment office"
+  do_not_recommend:
+    - "Entering flood water"
+    - "Using pesticides or other chemicals yourself"
+  target: "household; local authority"
+  priority: high
+  season: rainy
+  evidence: PENDING
+  sample_message: "Heavy rain has fallen in your area. Once it stops, empty or cover anything holding water around your home and check that your mosquito nets have no holes. Report large flooded areas that are not draining to your local government office."
+
+- id: standing_water_nearby
+  trigger_type: user_report
+  condition: "Standing water reported near the home that has not drained"
+  threshold: "distance_m <= 50 AND days_present > 3"
+  threshold_status: unverified
+  interpretation: "Likely mosquito breeding site"
+  actions_household:
+    - "Pour out, drain or fill in small amounts of standing water"
+    - "Empty or cover containers that hold water"
+  actions_community:
+    - "For ponds, blocked public drains or large areas of water, ask the local government health or environment office for help"
+  do_not_recommend:
+    - "Treating water with chemicals yourself"
+    - "Letting children play in the water"
+  target: "household; community"
+  priority: high
+  season: any
+  evidence: PENDING
+  sample_message: "Standing water near your home can breed mosquitoes. Pour out or cover what you safely can. For a pond or a blocked public drain, ask your local government office for help."
+
+- id: uncovered_water_storage
+  trigger_type: user_report
+  condition: "Household stores water in an open drum, tank or bucket"
+  threshold: null
+  threshold_status: not_applicable
+  interpretation: "Mosquitoes can breed in stored water"
+  actions_household:
+    - "Cover the container with a tight lid or fine mesh and close it after each use"
+    - "Empty and scrub containers that are not in use"
+  actions_community: []
+  do_not_recommend:
+    - "Adding oil, kerosene or any chemical to household water"
+    - "Throwing away safe drinking water"
+  target: household
+  priority: medium
+  season: any
+  evidence: PENDING
+  sample_message: "Open water containers can breed mosquitoes. Keep drums, tanks and buckets covered with a tight lid or fine mesh."
+
+- id: blocked_drain
+  trigger_type: user_report
+  condition: "Blocked drain or gutter near the home"
+  threshold: null
+  threshold_status: not_applicable
+  interpretation: "Water may stand still and breed mosquitoes"
+  actions_household:
+    - "If it is safe, clear leaves and rubbish so water flows, wearing gloves and covered shoes"
+  actions_community:
+    - "If it cannot be cleared safely, report it to the local sanitation or environment office"
+  do_not_recommend:
+    - "Pouring insecticide into drains"
+    - "Climbing into deep drains"
+  target: "household; community"
+  priority: medium
+  season: any
+  evidence: PENDING
+  sample_message: "A blocked drain near you can breed mosquitoes. Clear it if you can do so safely, or report it to your local sanitation office."
+
+- id: high_local_malaria_level
+  trigger_type: epidemiological
+  condition: "Malaria cases or forecast risk are high in the user's area"
+  threshold: "to be defined from the prediction model's own output"
+  threshold_status: unverified
+  interpretation: "More malaria is expected in the community; this says nothing about any one person"
+  actions_household:
+    - "Make sure everyone sleeps under a mosquito net every night"
+    - "Use mosquito repellent after dusk"
+    - "Get anyone with a fever tested promptly"
+  actions_community: []
+  do_not_recommend:
+    - "Alarming language"
+    - "Suggesting the user has malaria"
+    - "Suggesting anyone take malaria medicine without a test"
+  target: "household; community"
+  priority: high
+  season: any
+  evidence: who-malaria
+  sample_message: "Malaria levels are high in your area right now. Check that everyone is sleeping under a net and use repellent in the evenings. If anyone has a fever, get them tested promptly. This is information about your area, not a diagnosis."
+
+- id: vulnerable_person_in_household
+  trigger_type: user_profile
+  condition: "Household includes a child under 5 or a pregnant woman"
+  threshold: null
+  threshold_status: not_applicable
+  interpretation: "Someone in the home is at higher risk of severe malaria"
+  actions_household:
+    - "Make sure they sleep under a mosquito net every night"
+    - "Pregnant women: attend antenatal care, where preventive malaria treatment is given"
+    - "Young children: ask the immunisation clinic about the malaria vaccine"
+    - "Fever in a young child or pregnant woman: test and see a health worker the same day"
+  actions_community: []
+  do_not_recommend:
+    - "Giving malaria medicine without a health worker's advice"
+  target: household
+  priority: high
+  season: any
+  evidence: who-malaria
+  sample_message: "Young children and pregnant women are at higher risk from malaria. Make sure they sleep under a net every night, and get a test the same day if they have a fever."
+
+- id: low_net_use
+  trigger_type: user_report
+  condition: "Household reports not sleeping under mosquito nets regularly"
+  threshold: null
+  threshold_status: not_applicable
+  interpretation: "More exposure to mosquito bites at night"
+  actions_household:
+    - "Hang nets over every sleeping place and sleep under them every night"
+    - "Use mosquito repellent after dusk"
+  actions_community: []
+  do_not_recommend: []
+  target: household
+  priority: medium
+  season: any
+  evidence: who-malaria
+  sample_message: "Mosquito nets are one of the best protections against malaria at night. Hang your nets and sleep under them every night."

@@ -9,7 +9,12 @@ model we:
      length and count, system prompt injected exactly once at the top.
   2. Screen the latest user message. Possible emergencies and self-harm get a
      fixed reply that points to urgent care; clear-cut harmful requests and
-     prompt-injection attempts get a fixed refusal. Matches never reach the model.
+     prompt-injection attempts get a fixed refusal; requests for live data
+     (today's weather, the current outlook, the latest news) get a fixed reply
+     pointing to the app's screens. Matches never reach the model.
+
+Keeping the assistant to malaria in general is done after the model replies;
+see `topic.py`.
 
 Everything here is deterministic and cheap. The emergency check is a keyword
 match, NOT validated triage: it can miss real emergencies and it can fire on
@@ -24,6 +29,8 @@ from dataclasses import dataclass
 from ai.base import Message
 from config import settings
 
+from .topic import REPLY_APP_REFERRAL
+
 # ── Fixed replies ─────────────────────────────────────────────────────────
 
 REPLY_EMERGENCY = (
@@ -35,21 +42,21 @@ REPLY_EMERGENCY = (
 
 REPLY_SELF_HARM = (
     "I'm really glad you told me, and I'm sorry things feel this heavy right now. "
-    "I'm a health information assistant, not a counsellor, and you deserve support "
+    "I'm a malaria information assistant, not a counsellor, and you deserve support "
     "from a real person. Please reach out to someone you trust, or go to the nearest "
     "health facility. If you are in immediate danger, call 112, Nigeria's emergency "
     "number, right now."
 )
 
 REPLY_OFF_LIMITS = (
-    "That's outside what I can help with. I'm here for health information, such as "
-    "how malaria spreads, how to prevent mosquito bites, common symptoms, and when "
-    "to get tested or see a health professional."
+    "That's outside what I can help with. I'm only here for malaria information, "
+    "such as how malaria spreads, how to prevent mosquito bites, common symptoms, "
+    "and when to get tested or see a health professional."
 )
 
 REPLY_INJECTION = (
-    "I can't change how I work or step outside health information. "
-    "What health topic can I help you with?"
+    "I can't change how I work or step outside malaria information. "
+    "What would you like to know about malaria?"
 )
 
 # ── Patterns ──────────────────────────────────────────────────────────────
@@ -130,6 +137,40 @@ _HATE = _rx(
     """
 )
 
+# Requests for live or local figures. The assistant has no live data; the app's
+# Home, Outlook and Updates tabs do. Kept narrow on purpose: "why does rain
+# matter for malaria?" is knowledge and must reach the model, while "will it
+# rain today?" is live data. Looser cases are caught by the model's own
+# `Scope: app` label (see topic.py).
+_WHEN = r"(today|tonight|tomorrow|now|right\s+now|currently|this\s+(morning|evening|week|weekend|month))"
+_PLACE = r"(my\s+(area|state|lga|city|town|village|location|place|community)|here|near\s+me|around\s+me)"
+_APP_DATA = _rx(
+    rf"""
+    ( \b(what'?s|what\s+is|how'?s|how\s+is|tell\s+me|check|show\s+me|give\s+me)\s+
+        (the\s+)?(current\s+|today'?s\s+|tomorrow'?s\s+)?(weather|forecast)\b
+    | \b(weather|forecast)\s+({_WHEN}|update|report|for\s+{_PLACE}|in\s+{_PLACE})\b
+    | \b(today'?s|tomorrow'?s|current|this\s+week'?s)\s+(weather|forecast|temperature|humidity|rainfall)\b
+    | \b(temperature|humidity)\s+({_WHEN}|outside|in\s+{_PLACE})\b
+    | \b(will|would|is)\s+it\s+(going\s+to\s+|gonna\s+)?rain\b
+    | \b(is\s+it|will\s+it\s+be)\s+(hot|cold|sunny|humid|raining|rainy)\s+({_WHEN}|outside)\b
+    | \b(today'?s|current|latest|live|this\s+week'?s)\s+(malaria\s+)?
+        (risk(\s+level)?|outlook|cases?|case\s+counts?|numbers?|figures?|statistics|stats|news|updates?|alerts?|outbreaks?)\b
+    | \b(malaria\s+)?(risk(\s+level)?|outlook|cases?|situation)\s+(level\s+)?
+        ((in|for|around|at)\s+{_PLACE}|{_PLACE}|(in|for|at)\s+[a-z]+(\s+[a-z]+)?\s+{_WHEN}|{_WHEN})\b
+    | \bhow\s+many\s+(malaria\s+)?(cases|deaths|people)\b.{{0,60}}\b({_WHEN}|in\s+{_PLACE}|{_PLACE})\b
+    | \b(any|latest|recent|new)\s+(malaria\s+)?(outbreaks?|news|alerts?|updates?)\b
+    | \bis\s+(there\s+)?(malaria|an?\s+outbreak)\s+(high|bad|rising|increasing|common|spreading)?\s*
+        ((in|around|at)\s+{_PLACE}|{_PLACE})\s*({_WHEN})?
+    )
+    """
+)
+
+# "What does the outlook for my area mean?" asks for an explanation, not a
+# figure, so it goes to the model even though it looks like a live-data request.
+_WANTS_EXPLANATION = _rx(
+    r"\b( mean(s|ing)? | explain\w* | why | what\s+does | how\s+(does|do|is\s+it\s+(calculated|worked\s+out|made)) )\b"
+)
+
 # (label, pattern, reply, urgent). Order matters: the first match wins, so the
 # care-seeking replies are checked before the refusals.
 _RULES: tuple[tuple[str, re.Pattern[str], str, bool], ...] = (
@@ -141,6 +182,7 @@ _RULES: tuple[tuple[str, re.Pattern[str], str, bool], ...] = (
     ("illicit_drugs", _ILLICIT_DRUGS, REPLY_OFF_LIMITS, False),
     ("cybercrime", _CYBERCRIME, REPLY_OFF_LIMITS, False),
     ("hate", _HATE, REPLY_OFF_LIMITS, False),
+    ("app_data", _APP_DATA, REPLY_APP_REFERRAL, False),
 )
 
 
@@ -164,8 +206,11 @@ def screen_input(text: str) -> GuardrailVerdict:
     # Phones type a curly apostrophe ("can’t"); the patterns expect a straight one.
     normalised = re.sub(r"\s+", " ", text.replace("\u2019", "'")).strip()
     for label, pattern, reply, urgent in _RULES:
-        if pattern.search(normalised):
-            return GuardrailVerdict(blocked=True, label=label, reply=reply, urgent=urgent)
+        if not pattern.search(normalised):
+            continue
+        if label == "app_data" and _WANTS_EXPLANATION.search(normalised):
+            continue
+        return GuardrailVerdict(blocked=True, label=label, reply=reply, urgent=urgent)
     return GuardrailVerdict(blocked=False)
 
 

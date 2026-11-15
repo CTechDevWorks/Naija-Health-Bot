@@ -30,27 +30,35 @@ def _drop_idle(now: float) -> None:
         del _requests[key]
 
 
-def apply_rate_limit(user_id: str) -> None:
-    if is_anonymous(user_id):
+def apply_rate_limit(user_id: str, bucket: str = "chat") -> None:
+    """
+    Count one request against `user_id`. Chat and saved-history requests are
+    counted separately, so browsing old conversations does not use up the
+    allowance for asking questions.
+    """
+    if bucket == "history":
+        limit, window = settings.history_rate_limit, settings.auth_rate_window_s
+    elif is_anonymous(user_id):
         limit, window = settings.anon_rate_limit, settings.anon_rate_window_s
     else:
         limit, window = settings.auth_rate_limit, settings.auth_rate_window_s
 
+    key = user_id if bucket == "chat" else f"{bucket}|{user_id}"
     now = time.time()
     with _lock:
         if len(_requests) > _MAX_TRACKED_CALLERS:
             _drop_idle(now)
 
-        bucket = _requests[user_id]
-        while bucket and bucket[0] <= now - window:
-            bucket.popleft()
+        recent = _requests[key]
+        while recent and recent[0] <= now - window:
+            recent.popleft()
 
-        if len(bucket) >= limit:
-            retry_after = max(1, int(bucket[0] + window - now))
+        if len(recent) >= limit:
+            retry_after = max(1, int(recent[0] + window - now))
             raise HTTPException(
                 status_code=429,
-                detail="You're sending messages too quickly. Please wait a moment and try again.",
+                detail="You're sending requests too quickly. Please wait a moment and try again.",
                 headers={"Retry-After": str(retry_after)},
             )
 
-        bucket.append(now)
+        recent.append(now)

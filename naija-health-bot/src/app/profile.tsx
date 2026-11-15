@@ -18,12 +18,15 @@ import { LocationPicker } from "@/components/locationPicker";
 import { HealthIcon } from "@/components/healthIcon";
 import { layout, palette, radius, space } from "@/constants/designTokens";
 import { sources } from "@/constants/healthContent";
+import { SavedConversations } from "@/components/savedConversations";
+import { useAuth } from "@/hooks/useAuth";
+import { useEnvironment } from "@/hooks/useEnvironment";
 import { usePrototype } from "@/hooks/usePrototype";
 
 type Panel =
   "history" | "privacy" | "support" | "about" | "notifications" | null;
 const panelTitles = {
-  history: "Your conversation",
+  history: "Your conversations",
   privacy: "Your privacy matters",
   support: "A little help",
   about: "About 9ja Health",
@@ -31,7 +34,6 @@ const panelTitles = {
 };
 export default function ProfileScreen() {
   const {
-    state,
     messages,
     largerText,
     setLargerText,
@@ -39,6 +41,9 @@ export default function ProfileScreen() {
     setReminders,
     clearChat,
   } = usePrototype();
+  const { state, source } = useEnvironment();
+  const { status, email } = useAuth();
+  const signedIn = status === "ready";
   const [panel, setPanel] = useState<Panel>(null);
   const [locationOpen, setLocationOpen] = useState(false);
   const [clearConfirm, setClearConfirm] = useState(false);
@@ -52,23 +57,54 @@ export default function ProfileScreen() {
       >
         <Card style={styles.profileCard}>
           <View style={styles.avatar}>
-            <AppText variant="title" tone="forest">
-              A
-            </AppText>
+            {signedIn && email ? (
+              <AppText variant="title" tone="forest">
+                {email.charAt(0).toUpperCase()}
+              </AppText>
+            ) : (
+              <HealthIcon name="person" size={space.xxl} />
+            )}
           </View>
-          <AppText variant="heading" tone="forest">
-            Ada Okafor
+          <AppText
+            variant={signedIn ? "subheading" : "heading"}
+            tone="forest"
+            style={styles.center}
+          >
+            {signedIn ? email : "Guest"}
           </AppText>
-          <Badge>FICTIONAL DEMO PROFILE</Badge>
+          {signedIn && (
+            <View style={styles.centered}>
+              <Badge>SIGNED IN · TWO-FACTOR ON</Badge>
+            </View>
+          )}
           <View style={ui.row}>
             <HealthIcon name="pin" size={layout.smallIcon} />
             <AppText variant="small" tone="body">
-              {state}, Nigeria · Manual selection
+              {state
+                ? `${state}, Nigeria · ${source === "gps" ? "GPS" : source === "manual" ? "Manual" : "Location"}`
+                : "Choose your Nigerian state"}
             </AppText>
           </View>
           <AppText variant="small" tone="body" style={styles.center}>
-            No account needed. Just a little care for everyday life.
+            {signedIn
+              ? "Your conversations with the assistant are saved to this account."
+              : status === "enrol" || status === "challenge"
+                ? "Sign-in is not finished. Complete the two-factor step to save conversations."
+                : "No account needed. Just a little care for everyday life."}
           </AppText>
+          {status !== "disabled" && status !== "loading" && (
+            <Button
+              secondary={signedIn}
+              icon="lock"
+              onPress={() => router.push("/account")}
+            >
+              {signedIn
+                ? "Manage account"
+                : status === "guest"
+                  ? "Sign in or create an account"
+                  : "Finish signing in"}
+            </Button>
+          )}
         </Card>
         <View style={ui.smallStack}>
           <SectionHeading title="Your companion" />
@@ -76,7 +112,11 @@ export default function ProfileScreen() {
             <RowLink
               icon="history"
               title="Conversation history"
-              subtitle={`${questions.length} question${questions.length === 1 ? "" : "s"} in this session`}
+              subtitle={
+                signedIn
+                  ? "Saved to your account"
+                  : `${questions.length} question${questions.length === 1 ? "" : "s"} in this session`
+              }
               onPress={() => setPanel("history")}
             />
             <View style={ui.separator} />
@@ -175,11 +215,20 @@ export default function ProfileScreen() {
           setClearConfirm(false);
         }}
       >
-        {panel === "history" && (
+        {panel === "history" && signedIn && (
+          <SavedConversations
+            onOpened={() => {
+              setPanel(null);
+              router.push("/assistant");
+            }}
+          />
+        )}
+        {panel === "history" && !signedIn && (
           <>
             <AppText tone="body">
-              Only this open session is available. Nothing is saved to an
-              account or database.
+              {status === "disabled"
+                ? "Only this open session is available. Nothing is saved to an account or database."
+                : "You are not signed in, so only this open session is available and nothing is saved. Sign in to keep your conversations."}
             </AppText>
             {questions.length === 0 ? (
               <Card>
@@ -244,9 +293,17 @@ export default function ProfileScreen() {
               Less data. More peace of mind.
             </AppText>
             <AppText>
-              This prototype does not request GPS, create accounts, contact an
-              AI provider, or store your conversations. Messages, checklist
-              steps and preferences stay in memory and disappear on reload.
+              9ja Health does not request GPS. Checklist steps and preferences
+              stay in memory on this device and disappear on reload.
+            </AppText>
+            <AppText>
+              Questions you ask the assistant are sent to the 9ja Health server
+              and on to an AI provider to write the answer.
+            </AppText>
+            <AppText>
+              {status === "disabled"
+                ? "There are no accounts in this build, so conversations are not saved anywhere after the session ends."
+                : "An account is optional. Without one, conversations are not saved after the session ends. If you sign in, we keep your email address and your conversations with the assistant, as plain text, so you can read them again. You can delete any conversation, or all of them, from the saved conversations list."}
             </AppText>
             <AppText>
               Do not share names, contact details or private medical records in
@@ -254,8 +311,8 @@ export default function ProfileScreen() {
               privacy policies.
             </AppText>
             <AppText variant="small" tone="body">
-              Future server integrations require their own privacy review before
-              release.
+              This is a prototype. Its data handling has not had a formal
+              privacy review.
             </AppText>
           </>
         )}
@@ -330,9 +387,9 @@ export default function ProfileScreen() {
               trusted information — without pretending to be a doctor.
             </AppText>
             <AppText tone="body">
-              This frontend uses React Native, Expo SDK 58 and Expo Router. AI,
-              FastAPI, ML predictions, live weather, live reports and push
-              notifications are not connected.
+              This frontend uses React Native, Expo SDK 58 and Expo Router. The
+              assistant runs on a FastAPI service. ML predictions, live weather,
+              live reports and push notifications are not connected.
             </AppText>
             <SourceLink
               title="Educational source · World Health Organization"
@@ -361,4 +418,5 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   center: { textAlign: "center" },
+  centered: { alignSelf: "center" },
 });

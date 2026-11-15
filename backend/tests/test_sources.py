@@ -55,3 +55,12 @@ def test_approved_links_are_kept():
 def test_markdown_links_become_plain_text():
     text = "See [this page](https://example.com/x) today."
     assert remove_unapproved_links(text) == "See this page today."
+
+
+def test_approved_sources_are_malaria_related():
+    ids = set(load_sources())
+    assert "who-malaria" in ids and "ncdc" in ids
+    # Non-malaria topics that used to ship with the scaffold must stay out.
+    assert "who-healthy-diet" not in ids
+    assert "who-physical-activity" not in ids
+    assert len(ids) >= 10

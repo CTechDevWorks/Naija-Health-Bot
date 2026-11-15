@@ -18,15 +18,35 @@ import { OutlookCard } from "@/components/outlookCard";
 import { WeatherStrip } from "@/components/weatherStrip";
 import { layout, palette, radius, space } from "@/constants/designTokens";
 import { starters } from "@/constants/healthContent";
+import { useEnvironment } from "@/hooks/useEnvironment";
 import { usePrototype } from "@/hooks/usePrototype";
 
 export default function HomeScreen() {
-  const { state, send, reminders } = usePrototype();
+  const { send, reminders } = usePrototype();
+  const {
+    state,
+    placeLabel,
+    source,
+    status,
+    message,
+    refreshFromGps,
+  } = useEnvironment();
   const [locationOpen, setLocationOpen] = useState(false);
   function ask(question: string) {
     send(question);
     router.push("/assistant");
   }
+  const locationLabel =
+    placeLabel ?? state ?? (status === "loading" ? "Finding you…" : "Choose state");
+  const locationMeta =
+    status === "loading"
+      ? "Updating location…"
+      : source === "gps"
+        ? "GPS · tap to change"
+        : source === "manual"
+          ? "Manual · tap to change"
+          : message ?? "Tap to set location";
+
   return (
     <>
       <Screen>
@@ -55,7 +75,7 @@ export default function HomeScreen() {
               style={styles.avatar}
             >
               <AppText variant="subheading" tone="forest">
-                A
+                •
               </AppText>
             </Pressable>
           </View>
@@ -66,27 +86,30 @@ export default function HomeScreen() {
               A good day to take care of you
             </AppText>
             <AppText variant="title" tone="forest">
-              Hello, Ada.
+              {state ? `Hello from ${state}.` : "Hello."}
             </AppText>
           </View>
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel={`Change selected state, currently ${state}`}
+            accessibilityLabel={`Change location, currently ${locationLabel}`}
             onPress={() => setLocationOpen(true)}
+            onLongPress={() => void refreshFromGps()}
             style={styles.location}
           >
             <HealthIcon name="pin" size={layout.smallIcon} />
-            <AppText variant="label" tone="forest">
-              {state}
-            </AppText>
+            <View>
+              <AppText variant="label" tone="forest">
+                {locationLabel}
+              </AppText>
+              <AppText variant="caption" tone="body">
+                {locationMeta}
+              </AppText>
+            </View>
             <HealthIcon name="down" size={layout.smallIcon} />
           </Pressable>
         </View>
-        <AppText variant="caption" tone="body">
-          Interactive prototype · Fictional profile · Manual location
-        </AppText>
         <OutlookCard />
-        <WeatherStrip />
+        <WeatherStrip onChooseState={() => setLocationOpen(true)} />
         <View style={ui.smallStack}>
           <SectionHeading
             title="Small steps, big care"
@@ -159,7 +182,7 @@ export default function HomeScreen() {
             Start a conversation
           </Button>
           <AppText variant="caption" tone="white">
-            Prepared demo answers · Not a connected AI service
+            Live health information · Never a diagnosis
           </AppText>
         </View>
         <View style={ui.smallStack}>
