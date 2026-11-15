@@ -18,7 +18,7 @@
 - [ ] Create `requirements.txt`
 - [ ] Create reproducible training environment
 - [ ] Add clear README/documentation for the ML pipeline
-- [x] ~~Add `.gitignore`~~
+- [ ] Add `.gitignore`
 - [ ] Make sure datasets and generated model files are properly organized
 
 ---
@@ -316,8 +316,8 @@ The backend developer should be able to use the model without needing to underst
 - [ ] Set up Python virtual environment
 - [ ] Create clean backend architecture
 - [ ] Configure environment variables
-- [x] ~~Create `.env.example`~~
-- [x] ~~Add `.gitignore`~~
+- [ ] Create `.env.example`
+- [ ] Add `.gitignore`
 - [ ] Create `requirements.txt`
 - [ ] Configure CORS
 - [ ] Add API versioning
@@ -340,7 +340,6 @@ Organize the backend into clear responsibilities.
 - [ ] Location processing
 - [ ] RAG/AI logic
 - [ ] Health-report processing
-- [ ] Daily report scheduler (06:30 Africa/Lagos)
 - [ ] Configuration
 - [ ] Utilities
 
@@ -501,32 +500,32 @@ Potential authoritative sources include:
 
 ---
 
-# 11. ⏰ Backend Daily Health-Report Scheduler
+# 11. ⚡ Zapier Health-Report Automation
 
-Build the in-backend daily report job. **Do not use Zapier.**
+Build the automation pipeline.
 
-- [ ] Identify reliable official health-update / knowledge sources for grounding
-- [ ] Implement backend scheduler (APScheduler or equivalent lifespan/cron job)
-- [ ] Configure timezone as `Africa/Lagos`
-- [ ] Trigger the job at **06:30am** Nigeria local time
-- [ ] Ensure the job runs once per calendar day (idempotent)
-- [ ] Define the specific fixed-purpose AI request/prompt for the daily report
-- [ ] Send that request to the AI model from the backend
-- [ ] Ground the answer with RAG / trusted sources where appropriate
-- [ ] Extract / normalize title
-- [ ] Extract / normalize publication or generation date
-- [ ] Extract / normalize source(s)
-- [ ] Extract / normalize original URL(s) where applicable
-- [ ] Extract / normalize relevant content / summary
+- [ ] Identify reliable official health-update sources
+- [ ] Identify RSS feeds, email notifications, web pages, or other usable channels
+- [ ] Create Zapier trigger
+- [ ] Detect new health update
+- [ ] Filter irrelevant updates
+- [ ] Extract title
+- [ ] Extract publication date
+- [ ] Extract source
+- [ ] Extract original URL
+- [ ] Extract relevant content
+- [ ] Send content to AI summarization step
+- [ ] Generate concise summary
 - [ ] Classify topic
 - [ ] Classify location
 - [ ] Classify urgency where appropriate
-- [ ] Persist the structured report on the backend
+- [ ] Preserve original source
+- [ ] Send processed report to backend/database
 - [ ] Ensure AI summaries are clearly labelled
-- [ ] Never allow the AI to invent information or fabricate sources
-- [ ] Test duplicate / same-day re-runs
-- [ ] Test scheduler failure / missed run recovery
-- [ ] Test malformed AI responses
+- [ ] Never allow the AI to invent information
+- [ ] Test duplicate reports
+- [ ] Test failed Zapier runs
+- [ ] Test malformed source content
 
 ---
 
@@ -629,7 +628,7 @@ Test:
 - [ ] Prevention rules
 - [ ] Chat assistant
 - [ ] Health reports
-- [ ] Daily report scheduler (06:30) ingestion
+- [ ] Zapier ingestion
 - [ ] Full outlook pipeline
 
 ---
@@ -663,7 +662,7 @@ Work with the mobile developer to verify:
 - [ ] Verify model loading
 - [ ] Verify ML inference
 - [ ] Verify health assistant
-- [ ] Verify 06:30 daily report scheduler
+- [ ] Verify Zapier integration
 - [ ] Test production API from mobile application
 - [ ] Document production URL/configuration
 
@@ -692,7 +691,7 @@ Work with the mobile developer to verify:
 - [ ] Prediction → user-facing interpretation
 - [ ] Environmental conditions → prevention recommendations
 - [ ] Health sources → RAG assistant
-- [ ] Backend scheduler (06:30) → AI daily report → health reports
+- [ ] Nigerian health sources → Zapier → health reports
 - [ ] Backend → mobile application
 
 ## Failure States
@@ -705,7 +704,7 @@ Work with the mobile developer to verify:
 - [ ] Missing data
 - [ ] RAG retrieval failure
 - [ ] LLM failure
-- [ ] Daily report scheduler failure
+- [ ] Zapier failure
 - [ ] No health reports available
 - [ ] Backend unavailable
 
@@ -755,7 +754,7 @@ Work with the mobile developer to verify:
 - [ ] Health AI assistant
 - [ ] RAG
 - [ ] Nigerian health reports
-- [ ] Backend 06:30 daily report scheduler
+- [ ] Zapier automation
 - [ ] Notifications
 - [ ] Better error handling
 - [ ] Improved visualizations

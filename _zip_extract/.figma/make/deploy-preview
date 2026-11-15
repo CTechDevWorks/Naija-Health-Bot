@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+(
+  cd naija-health-bot
+  npm exec -- expo export --platform web --output-dir dist
+)
+
+[[ -d "naija-health-bot/dist" ]] || {
+  echo "Expected build output at naija-health-bot/dist" >&2
+  exit 1
+}
+
+figma make deploy-preview --build-dir "naija-health-bot/dist"

@@ -1,0 +1,10 @@
+{
+  "description": "9ja Health is a mobile-first health companion for Nigeria, with clear educational information, everyday prevention tips and a transparent interactive assistant prototype.",
+  "robots": {
+    "index": false
+  },
+  "accessibility": {
+    "addBypassLinks": false,
+    "ignoreReducedMotion": false
+  }
+}
