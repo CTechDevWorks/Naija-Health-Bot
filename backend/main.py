@@ -25,6 +25,8 @@ Endpoints
     GET    /api/v1/conversations/{id}  → one conversation with its messages
     DELETE /api/v1/conversations/{id}  → delete one
     DELETE /api/v1/conversations       → delete all of them
+    GET  /api/v1/health-reports        → published official health updates
+    POST /api/v1/jobs/daily-health-updates → scrape → AI summarise → Supabase
     GET  /docs          → interactive API docs
 
 Sign-in is optional. Without a token the chat works and nothing is saved. Saved
@@ -47,7 +49,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from api import chat, conversations, health
+from api import chat, conversations, health, reports
 from config import settings
 from services.keep_alive import start_keep_alive
 
@@ -75,12 +77,13 @@ app.add_middleware(
     allow_origins=settings.allowed_origins,
     allow_credentials=True,
     allow_methods=["GET", "POST", "DELETE"],
-    allow_headers=["Authorization", "Content-Type"],
+    allow_headers=["Authorization", "Content-Type", "X-Job-Secret"],
 )
 
 app.include_router(health.router)
 app.include_router(chat.router)
 app.include_router(conversations.router)
+app.include_router(reports.router)
 
 
 @app.get("/", include_in_schema=False)

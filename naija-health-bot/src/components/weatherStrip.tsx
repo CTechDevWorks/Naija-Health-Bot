@@ -1,4 +1,10 @@
-import { ActivityIndicator, Pressable, StyleSheet, View, useWindowDimensions } from "react-native";
+import {
+  ActivityIndicator,
+  Pressable,
+  StyleSheet,
+  View,
+  useWindowDimensions,
+} from "react-native";
 
 import { AppText, Button, ui } from "./healthUi";
 import { HealthIcon, IconName } from "./healthIcon";
@@ -11,20 +17,9 @@ type WeatherCell = {
   value: string;
 };
 
-function formatUpdatedAt(iso: string) {
-  const date = new Date(iso);
-  if (Number.isNaN(date.getTime())) return iso;
-  return date.toLocaleString([], {
-    day: "numeric",
-    month: "short",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-}
-
 export function WeatherStrip({ onChooseState }: { onChooseState?: () => void }) {
   const { width } = useWindowDimensions();
-  const { status, weather, message, refreshFromGps, source } = useEnvironment();
+  const { status, weather, refreshFromGps } = useEnvironment();
   const loading = status === "loading";
 
   const cells: WeatherCell[] = weather
@@ -49,27 +44,32 @@ export function WeatherStrip({ onChooseState }: { onChooseState?: () => void }) 
           name: "Wind",
           value: `${weather.windSpeedKmh} km/h`,
         },
+        {
+          icon: "sun",
+          name: "Feels like",
+          value: `${weather.feelsLikeC}°C`,
+        },
+        {
+          icon: "cloud",
+          name: "Cloud cover",
+          value: `${weather.cloudCoverPct}%`,
+        },
       ]
     : [
         { icon: "sun", name: "Temperature", value: "—" },
         { icon: "drop", name: "Humidity", value: "—" },
         { icon: "rain", name: "Rainfall", value: "—" },
         { icon: "wind", name: "Wind", value: "—" },
+        { icon: "sun", name: "Feels like", value: "—" },
+        { icon: "cloud", name: "Cloud cover", value: "—" },
       ];
 
   return (
     <View style={styles.card}>
       <View style={ui.sectionHeading}>
-        <View style={ui.smallStack}>
-          <AppText variant="subheading" tone="forest">
-            Your environment
-          </AppText>
-          {weather ? (
-            <AppText variant="caption" tone="body">
-              {weather.summary}
-            </AppText>
-          ) : null}
-        </View>
+        <AppText variant="subheading" tone="forest">
+          Weather now
+        </AppText>
         {loading ? (
           <ActivityIndicator color={palette.forest} />
         ) : (
@@ -105,32 +105,16 @@ export function WeatherStrip({ onChooseState }: { onChooseState?: () => void }) 
         ))}
       </View>
 
-      {weather ? (
-        <AppText variant="caption" tone="body">
-          {weather.source}
-          {source === "manual" ? " · State centre" : " · Your location"} · Updated{" "}
-          {formatUpdatedAt(weather.updatedAt)}
-        </AppText>
-      ) : (
-        <View style={ui.smallStack}>
-          <AppText variant="caption" tone="body">
-            {message ??
-              (loading
-                ? "Loading current conditions…"
-                : "Weather is not available yet.")}
-          </AppText>
-          {(status === "needs_manual" || status === "error") && onChooseState ? (
-            <Button secondary onPress={onChooseState}>
-              Choose state manually
-            </Button>
-          ) : null}
-          {status === "weather_error" ? (
-            <Button secondary onPress={() => void refreshFromGps()}>
-              Try again
-            </Button>
-          ) : null}
-        </View>
-      )}
+      {!weather && !loading && (status === "needs_manual" || status === "error") && onChooseState ? (
+        <Button secondary onPress={onChooseState}>
+          Choose state
+        </Button>
+      ) : null}
+      {!weather && status === "weather_error" ? (
+        <Button secondary onPress={() => void refreshFromGps()}>
+          Try again
+        </Button>
+      ) : null}
     </View>
   );
 }

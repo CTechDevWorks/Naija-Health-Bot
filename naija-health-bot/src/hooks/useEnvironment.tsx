@@ -44,10 +44,6 @@ type EnvironmentContextValue = {
 
 const Context = createContext<EnvironmentContextValue | null>(null);
 
-async function loadWeather(coords: Coordinates) {
-  return fetchCurrentWeather(coords);
-}
-
 export function EnvironmentProvider({ children }: PropsWithChildren) {
   const [status, setStatus] = useState<EnvironmentStatus>("loading");
   const [state, setState] = useState<string | null>(null);
@@ -57,9 +53,10 @@ export function EnvironmentProvider({ children }: PropsWithChildren) {
   const [weather, setWeather] = useState<WeatherSnapshot | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const requestId = useRef(0);
+  const started = useRef(false);
 
   const applyWeather = useCallback(async (nextCoords: Coordinates) => {
-    const snapshot = await loadWeather(nextCoords);
+    const snapshot = await fetchCurrentWeather(nextCoords);
     setWeather(snapshot);
     setCoords(nextCoords);
     return snapshot;
@@ -72,14 +69,32 @@ export function EnvironmentProvider({ children }: PropsWithChildren) {
     try {
       const position = await requestForegroundLocation();
       if (id !== requestId.current) return;
+
       const resolved = await resolveNigerianState(position);
       if (id !== requestId.current) return;
+
+      // Show the state immediately so the UI is not blank while weather loads.
       setState(resolved.state);
       setPlaceLabel(resolved.label);
       setSource("gps");
-      await applyWeather(position);
-      if (id !== requestId.current) return;
-      setStatus("ready");
+      setCoords(position);
+      setMessage(`Loading weather for ${resolved.state}…`);
+
+      try {
+        await applyWeather(position);
+        if (id !== requestId.current) return;
+        setMessage(null);
+        setStatus("ready");
+      } catch (weatherError) {
+        if (id !== requestId.current) return;
+        setWeather(null);
+        setMessage(
+          weatherError instanceof WeatherServiceError
+            ? weatherError.message
+            : "Unable to retrieve weather for your location.",
+        );
+        setStatus("weather_error");
+      }
     } catch (error) {
       if (id !== requestId.current) return;
       setWeather(null);
@@ -93,11 +108,6 @@ export function EnvironmentProvider({ children }: PropsWithChildren) {
             ? "needs_manual"
             : "error",
         );
-        return;
-      }
-      if (error instanceof WeatherServiceError) {
-        setMessage(error.message);
-        setStatus("weather_error");
         return;
       }
       setMessage("Unable to update your location right now.");
@@ -123,6 +133,7 @@ export function EnvironmentProvider({ children }: PropsWithChildren) {
       try {
         await applyWeather(point);
         if (id !== requestId.current) return;
+        setMessage(null);
         setStatus("ready");
       } catch (error) {
         if (id !== requestId.current) return;
@@ -138,7 +149,11 @@ export function EnvironmentProvider({ children }: PropsWithChildren) {
     [applyWeather],
   );
 
+  // Run once on mount — do not re-subscribe when callbacks change (avoids
+  // Strict Mode / dependency races that leave status stuck on "loading").
   useEffect(() => {
+    if (started.current) return;
+    started.current = true;
     void refreshFromGps();
   }, [refreshFromGps]);
 

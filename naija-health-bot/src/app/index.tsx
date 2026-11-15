@@ -3,11 +3,9 @@ import { router } from "expo-router";
 import { Pressable, StyleSheet, View } from "react-native";
 import {
   AppText,
-  Badge,
   Button,
   Card,
   Disclaimer,
-  IconButton,
   Screen,
   SectionHeading,
   ui,
@@ -17,35 +15,15 @@ import { LocationPicker } from "@/components/locationPicker";
 import { OutlookCard } from "@/components/outlookCard";
 import { WeatherStrip } from "@/components/weatherStrip";
 import { layout, palette, radius, space } from "@/constants/designTokens";
-import { starters } from "@/constants/healthContent";
 import { useEnvironment } from "@/hooks/useEnvironment";
 import { usePrototype } from "@/hooks/usePrototype";
 
 export default function HomeScreen() {
-  const { send, reminders } = usePrototype();
-  const {
-    state,
-    placeLabel,
-    source,
-    status,
-    message,
-    refreshFromGps,
-  } = useEnvironment();
+  const { reminders } = usePrototype();
+  const { state, placeLabel, status, refreshFromGps } = useEnvironment();
   const [locationOpen, setLocationOpen] = useState(false);
-  function ask(question: string) {
-    send(question);
-    router.push("/assistant");
-  }
   const locationLabel =
     placeLabel ?? state ?? (status === "loading" ? "Finding you…" : "Choose state");
-  const locationMeta =
-    status === "loading"
-      ? "Updating location…"
-      : source === "gps"
-        ? "GPS · tap to change"
-        : source === "manual"
-          ? "Manual · tap to change"
-          : message ?? "Tap to set location";
 
   return (
     <>
@@ -62,33 +40,21 @@ export default function HomeScreen() {
               WELLNESS, CLOSER TO HOME
             </AppText>
           </View>
-          <View style={ui.row}>
-            <IconButton
-              icon="book"
-              label="Explore health topics"
-              onPress={() => router.push("/explore")}
-            />
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel="Open profile and preferences"
-              onPress={() => router.push("/profile")}
-              style={styles.avatar}
-            >
-              <AppText variant="subheading" tone="forest">
-                •
-              </AppText>
-            </Pressable>
-          </View>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Open profile and preferences"
+            onPress={() => router.push("/profile")}
+            style={styles.avatar}
+          >
+            <AppText variant="subheading" tone="forest">
+              •
+            </AppText>
+          </Pressable>
         </View>
         <View style={styles.welcome}>
-          <View style={ui.smallStack}>
-            <AppText variant="small" tone="body">
-              A good day to take care of you
-            </AppText>
-            <AppText variant="title" tone="forest">
-              {state ? `Hello from ${state}.` : "Hello."}
-            </AppText>
-          </View>
+          <AppText variant="title" tone="forest">
+            {state ? `Hello, ${state}.` : "Hello."}
+          </AppText>
           <Pressable
             accessibilityRole="button"
             accessibilityLabel={`Change location, currently ${locationLabel}`}
@@ -97,14 +63,9 @@ export default function HomeScreen() {
             style={styles.location}
           >
             <HealthIcon name="pin" size={layout.smallIcon} />
-            <View>
-              <AppText variant="label" tone="forest">
-                {locationLabel}
-              </AppText>
-              <AppText variant="caption" tone="body">
-                {locationMeta}
-              </AppText>
-            </View>
+            <AppText variant="label" tone="forest">
+              {locationLabel}
+            </AppText>
             <HealthIcon name="down" size={layout.smallIcon} />
           </Pressable>
         </View>
@@ -112,8 +73,8 @@ export default function HomeScreen() {
         <WeatherStrip onChooseState={() => setLocationOpen(true)} />
         <View style={ui.smallStack}>
           <SectionHeading
-            title="Small steps, big care"
-            action="See all"
+            title="Prevention"
+            action="Open"
             onPress={() => router.push("/prevention")}
           />
           <Card>
@@ -122,9 +83,9 @@ export default function HomeScreen() {
                 <HealthIcon name="shield" />
               </View>
               <View style={ui.flex}>
-                <AppText variant="subheading">Make tonight a net night</AppText>
+                <AppText variant="subheading">Daily AI report</AppText>
                 <AppText variant="small" tone="body">
-                  An everyday habit for mosquito-bite prevention.
+                  Likelihood and tips for your area.
                 </AppText>
               </View>
             </View>
@@ -133,14 +94,14 @@ export default function HomeScreen() {
               icon="right"
               onPress={() => router.push("/prevention")}
             >
-              Explore prevention tips
+              View report
             </Button>
           </Card>
         </View>
         <View style={ui.smallStack}>
           <SectionHeading
-            title="Stay in the know"
-            action="Updates"
+            title="Updates"
+            action="Open"
             onPress={() => router.push("/updates")}
           />
           <Pressable
@@ -150,92 +111,34 @@ export default function HomeScreen() {
           >
             <HealthIcon name="news" />
             <View style={ui.flex}>
-              <AppText variant="subheading">
-                Trusted information. Clear sources.
-              </AppText>
+              <AppText variant="subheading">Today’s briefing</AppText>
               <AppText variant="small" tone="body">
-                Find Nigerian health authorities and official updates.
+                Health news, summarised daily.
               </AppText>
             </View>
             <HealthIcon name="chevron" size={layout.smallIcon} />
           </Pressable>
         </View>
         <View style={styles.assistantCard}>
-          <View style={ui.sectionHeading}>
-            <View style={styles.assistantIcon}>
-              <HealthIcon name="chat" />
-            </View>
-            <View style={styles.demoBadge}>
-              <AppText variant="eyebrow" tone="forest">
-                MEET YOUR COMPANION
-              </AppText>
-            </View>
-          </View>
           <AppText variant="title" tone="white">
-            Health questions?{"\n"}Let’s talk.
-          </AppText>
-          <AppText tone="white">
-            A little clarity can go a long way. Explore simple, source-backed
-            health information.
+            Ask the assistant
           </AppText>
           <Button icon="right" onPress={() => router.push("/assistant")}>
             Start a conversation
           </Button>
-          <AppText variant="caption" tone="white">
-            Live health information · Never a diagnosis
-          </AppText>
         </View>
-        <View style={ui.smallStack}>
-          <SectionHeading title="A good place to start" />
-          {starters.slice(0, 3).map((question) => (
-            <Pressable
-              accessibilityRole="button"
-              key={question}
-              style={styles.question}
-              onPress={() => ask(question)}
-            >
-              <AppText variant="button" tone="forest" style={ui.flex}>
-                {question}
-              </AppText>
-              <HealthIcon name="arrow" size={layout.smallIcon} />
-            </Pressable>
-          ))}
-        </View>
-        <Card soft>
-          <Badge>A LITTLE LEARNING, EVERY DAY</Badge>
-          <AppText variant="heading" tone="forest">
-            Good health starts with understanding.
-          </AppText>
-          <AppText variant="small" tone="body">
-            Nutrition, everyday wellness and prevention — in plain language.
-          </AppText>
-          <Button secondary icon="book" onPress={() => router.push("/explore")}>
-            Explore health topics
-          </Button>
-        </Card>
         {reminders && (
           <Card soft>
             <View style={ui.row}>
               <HealthIcon name="bell" />
-              <AppText variant="subheading">Your in-app reminder</AppText>
+              <AppText variant="subheading">Net check</AppText>
             </View>
             <AppText tone="body">
-              A quick check before bed: is your insecticide-treated net ready
-              for tonight?
-            </AppText>
-            <AppText variant="caption" tone="body">
-              Shown because you enabled the session-only reminder in Profile. No
-              push notification is sent.
+              Is your insecticide-treated net ready for tonight?
             </AppText>
           </Card>
         )}
         <Disclaimer />
-        <View style={styles.footer}>
-          <HealthIcon name="heart" size={layout.smallIcon} />
-          <AppText variant="caption" tone="body">
-            Made with care, for everyday life in Nigeria.
-          </AppText>
-        </View>
       </Screen>
       <LocationPicker
         visible={locationOpen}
@@ -296,37 +199,5 @@ const styles = StyleSheet.create({
     padding: space.xl,
     borderRadius: radius.lg,
     gap: space.lg,
-  },
-  assistantIcon: {
-    width: layout.featureIcon,
-    height: layout.featureIcon,
-    backgroundColor: palette.primary,
-    borderRadius: radius.md,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  demoBadge: {
-    backgroundColor: palette.cream,
-    borderRadius: radius.pill,
-    paddingVertical: space.xs,
-    paddingHorizontal: space.sm,
-  },
-  question: {
-    borderWidth: layout.line,
-    borderColor: palette.line,
-    backgroundColor: palette.white,
-    borderRadius: radius.md,
-    flexDirection: "row",
-    padding: space.lg,
-    minHeight: layout.touch,
-    alignItems: "center",
-    gap: space.md,
-  },
-  footer: {
-    flexDirection: "row",
-    gap: space.sm,
-    justifyContent: "center",
-    paddingVertical: space.sm,
-    alignItems: "center",
   },
 });

@@ -1,11 +1,12 @@
 # Supabase setup for 9ja Health
 
-Two SQL files, run both in the Supabase SQL Editor (in any order):
+SQL files, run in the Supabase SQL Editor:
 
 | File | What it creates |
 |---|---|
 | `chat_history.sql` | Saved conversations (accounts + two-factor) |
 | `rag.sql` | Malaria knowledge tables + similarity search |
+| `health_reports.sql` | Daily Updates feed (`update_sources`, `health_reports`, job log) |
 
 ## RAG edge functions
 

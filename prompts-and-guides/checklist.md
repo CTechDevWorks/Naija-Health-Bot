@@ -641,7 +641,7 @@ Work with the mobile developer to verify:
 - [x] ~~Permission denial works~~ (manual state fallback)
 - [x] ~~Manual location fallback works~~
 - [ ] Outlook endpoint works
-- [x] ~~Weather appears correctly~~ (mobile: Open-Meteo current conditions)
+- [x] ~~Weather appears correctly~~ (mobile: OpenWeather Current Weather; key in EXPO_PUBLIC_OPENWEATHER_API_KEY)
 - [ ] ML prediction appears correctly
 - [ ] Prevention recommendations appear correctly
 - [ ] Assistant works

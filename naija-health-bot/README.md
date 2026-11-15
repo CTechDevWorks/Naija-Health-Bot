@@ -1,39 +1,19 @@
-# 9ja Health (mobile)
+# 9ja Health — mobile app
 
-React Native + Expo app for **9ja Health** — AI-powered health and environmental intelligence for Nigeria (malaria area-level outlook first).
-
-## Stack
-
-- Expo Router (tabs: Home · Outlook · Prevention · Assistant · Updates)
-- TypeScript
-- StyleSheet + design tokens in `src/constants/theme.ts`
-- Inter via `@expo-google-fonts/inter`
-- TanStack Query, Zod, AsyncStorage, expo-location, expo-notifications
+Expo / React Native client for **9ja Health**. Project overview, problem framing, and full setup: **[../README.md](../README.md)**.
 
 ## Run
 
 ```bash
-npm install
+npm ci
 npx expo start
 ```
 
-Set `EXPO_PUBLIC_API_BASE_URL` when the FastAPI backend is available (see root `.env.example` when added).
+Configure `EXPO_PUBLIC_API_BASE_URL`, `EXPO_PUBLIC_OPENWEATHER_API_KEY`, and (optional) `EXPO_PUBLIC_SUPABASE_*` in `.env`.
 
-## Structure
+## Checks
 
-```text
-src/
-  app/           # Expo Router screens
-  components/    # UI building blocks
-  constants/     # Design tokens
-  services/      # API client
-  types/         # Shared types
-  hooks/         # Feature hooks (as needed)
-assets/brand/    # Logo placeholder (final brand TBD)
+```bash
+npx tsc --noEmit
+npx expo lint
 ```
-
-## Notes
-
-- Not a diagnostic tool. Area-level estimates only.
-- Daily health reports come from the backend 06:30 Africa/Lagos scheduler (no Zapier).
-- Final logo/app icon are deferred; `assets/brand/logo-placeholder.jpeg` is temporary.

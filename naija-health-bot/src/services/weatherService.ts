@@ -1,38 +1,15 @@
-import { z } from "zod";
-
 import type { Coordinates } from "@/services/locationService";
-
-const openMeteoSchema = z.object({
-  current: z.object({
-    time: z.string(),
-    temperature_2m: z.number(),
-    relative_humidity_2m: z.number(),
-    precipitation: z.number(),
-    rain: z.number().optional(),
-    wind_speed_10m: z.number(),
-    weather_code: z.number(),
-  }),
-  daily: z
-    .object({
-      precipitation_sum: z.array(z.number()).optional(),
-    })
-    .optional(),
-  current_units: z
-    .object({
-      temperature_2m: z.string().optional(),
-      relative_humidity_2m: z.string().optional(),
-      precipitation: z.string().optional(),
-      wind_speed_10m: z.string().optional(),
-    })
-    .optional(),
-});
 
 export type WeatherSnapshot = {
   temperatureC: number;
+  /** Apparent temperature (wind and humidity included). */
+  feelsLikeC: number;
   humidityPct: number;
-  /** Rainfall shown in the strip — prefers today's daily sum, else current precip. */
+  /** Rainfall shown in the strip — prefers last 1h, else 3h if present. */
   rainfallMm: number;
   windSpeedKmh: number;
+  /** Sky cover 0–100; useful for rain and outdoor planning. */
+  cloudCoverPct: number;
   summary: string;
   source: string;
   updatedAt: string;
@@ -45,72 +22,154 @@ export class WeatherServiceError extends Error {
   }
 }
 
-/** WMO weather interpretation codes → plain-language summary. */
-function summariseWeatherCode(code: number): string {
-  if (code === 0) return "Clear sky";
-  if (code === 1) return "Mainly clear";
-  if (code === 2) return "Partly cloudy";
-  if (code === 3) return "Overcast";
-  if (code === 45 || code === 48) return "Foggy";
-  if (code >= 51 && code <= 57) return "Drizzle";
-  if (code >= 61 && code <= 67) return "Rain";
-  if (code >= 71 && code <= 77) return "Snow";
-  if (code >= 80 && code <= 82) return "Rain showers";
-  if (code >= 95) return "Thunderstorm";
-  return "Mixed conditions";
+const FETCH_TIMEOUT_MS = 12_000;
+
+function asNumber(value: unknown): number | null {
+  return typeof value === "number" && Number.isFinite(value) ? value : null;
+}
+
+function getApiKey(): string {
+  return (process.env.EXPO_PUBLIC_OPENWEATHER_API_KEY ?? "").trim();
 }
 
 /**
- * Current conditions from Open-Meteo Forecast API (no API key).
- * @see https://open-meteo.com/en/docs
+ * Hard timeout via Promise.race — more reliable on React Native than relying
+ * solely on AbortController, which can leave fetch hung indefinitely.
+ */
+async function fetchJson(url: string): Promise<unknown> {
+  const controller = new AbortController();
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  let timedOut = false;
+
+  const timeout = new Promise<never>((_, reject) => {
+    timer = setTimeout(() => {
+      timedOut = true;
+      controller.abort();
+      reject(
+        new WeatherServiceError(
+          "Weather request timed out. Check your connection and try again.",
+        ),
+      );
+    }, FETCH_TIMEOUT_MS);
+  });
+
+  try {
+    return await Promise.race([
+      (async () => {
+        const response = await fetch(url, { signal: controller.signal });
+        if (response.status === 401) {
+          throw new WeatherServiceError(
+            "OpenWeather rejected the API key. Check EXPO_PUBLIC_OPENWEATHER_API_KEY and restart Expo.",
+          );
+        }
+        if (response.status === 429) {
+          throw new WeatherServiceError(
+            "OpenWeather rate limit reached. Try again in a moment.",
+          );
+        }
+        if (!response.ok) {
+          throw new WeatherServiceError(
+            `Weather request failed (${response.status}).`,
+          );
+        }
+        return await response.json();
+      })(),
+      timeout,
+    ]);
+  } catch (error) {
+    if (error instanceof WeatherServiceError) throw error;
+    if (timedOut || (error instanceof Error && error.name === "AbortError")) {
+      throw new WeatherServiceError(
+        "Weather request timed out. Check your connection and try again.",
+      );
+    }
+    throw new WeatherServiceError(
+      "Unable to reach OpenWeather. Check your connection and try again.",
+    );
+  } finally {
+    if (timer) clearTimeout(timer);
+  }
+}
+
+/**
+ * Current weather via OpenWeather Current Weather Data API.
+ * @see https://openweathermap.org/current
  */
 export async function fetchCurrentWeather(
   coords: Coordinates,
 ): Promise<WeatherSnapshot> {
-  const params = new URLSearchParams({
-    latitude: String(coords.latitude),
-    longitude: String(coords.longitude),
-    current: [
-      "temperature_2m",
-      "relative_humidity_2m",
-      "precipitation",
-      "rain",
-      "wind_speed_10m",
-      "weather_code",
-    ].join(","),
-    daily: "precipitation_sum",
-    forecast_days: "1",
-    timezone: "Africa/Lagos",
-    wind_speed_unit: "kmh",
-  });
-
-  const response = await fetch(
-    `https://api.open-meteo.com/v1/forecast?${params.toString()}`,
-  );
-  if (!response.ok) {
+  const apiKey = getApiKey();
+  if (!apiKey) {
     throw new WeatherServiceError(
-      "Unable to retrieve current weather from Open-Meteo.",
+      "Weather is not configured. Add EXPO_PUBLIC_OPENWEATHER_API_KEY to naija-health-bot/.env and restart Expo.",
     );
   }
 
-  const json: unknown = await response.json();
-  const parsed = openMeteoSchema.safeParse(json);
-  if (!parsed.success) {
-    throw new WeatherServiceError("Weather response was incomplete or invalid.");
+  const params = new URLSearchParams({
+    lat: String(coords.latitude),
+    lon: String(coords.longitude),
+    appid: apiKey,
+    units: "metric",
+  });
+
+  const json = (await fetchJson(
+    `https://api.openweathermap.org/data/2.5/weather?${params.toString()}`,
+  )) as {
+    weather?: Array<{ description?: string; main?: string }>;
+    main?: { temp?: number; feels_like?: number; humidity?: number };
+    wind?: { speed?: number };
+    clouds?: { all?: number };
+    rain?: { "1h"?: number; "3h"?: number };
+    dt?: number;
+    cod?: number | string;
+    message?: string;
+  };
+
+  if (json.cod && Number(json.cod) !== 200) {
+    throw new WeatherServiceError(
+      typeof json.message === "string"
+        ? `OpenWeather: ${json.message}`
+        : "OpenWeather returned an error.",
+    );
   }
 
-  const { current, daily } = parsed.data;
-  const dailyRain = daily?.precipitation_sum?.[0];
-  const rainfallMm =
-    typeof dailyRain === "number" ? dailyRain : current.precipitation;
+  const temperatureC = asNumber(json.main?.temp);
+  const humidityPct = asNumber(json.main?.humidity);
+  const cloudCoverPct = asNumber(json.clouds?.all) ?? 0;
+  // With units=metric, wind.speed is still metres per second.
+  const windMs = asNumber(json.wind?.speed);
+  const rain1h = asNumber(json.rain?.["1h"]);
+  const rain3h = asNumber(json.rain?.["3h"]);
+  const rainfallMm = rain1h ?? rain3h ?? 0;
+  const summaryRaw =
+    json.weather?.[0]?.description?.trim() ||
+    json.weather?.[0]?.main?.trim() ||
+    "Current conditions";
+  const summary =
+    summaryRaw.length > 0
+      ? summaryRaw.charAt(0).toUpperCase() + summaryRaw.slice(1)
+      : "Current conditions";
+
+  if (temperatureC === null || humidityPct === null || windMs === null) {
+    throw new WeatherServiceError("OpenWeather response was incomplete.");
+  }
+
+  const feelsLikeC = asNumber(json.main?.feels_like) ?? temperatureC;
+
+  const updatedAt =
+    typeof json.dt === "number"
+      ? new Date(json.dt * 1000).toISOString()
+      : new Date().toISOString();
 
   return {
-    temperatureC: Math.round(current.temperature_2m),
-    humidityPct: Math.round(current.relative_humidity_2m),
+    temperatureC: Math.round(temperatureC),
+    feelsLikeC: Math.round(feelsLikeC),
+    humidityPct: Math.round(humidityPct),
     rainfallMm: Math.round(rainfallMm * 10) / 10,
-    windSpeedKmh: Math.round(current.wind_speed_10m),
-    summary: summariseWeatherCode(current.weather_code),
-    source: "Open-Meteo",
-    updatedAt: current.time,
+    windSpeedKmh: Math.round(windMs * 3.6),
+    cloudCoverPct: Math.round(cloudCoverPct),
+    summary,
+    source: "OpenWeather",
+    updatedAt,
   };
 }

@@ -1,5 +1,5 @@
-import { ComponentRef, useEffect, useRef, useState } from "react";
-import { router } from "expo-router";
+import { ComponentRef, useCallback, useEffect, useRef, useState } from "react";
+import { router, useFocusEffect } from "expo-router";
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
@@ -12,7 +12,6 @@ import {
 } from "react-native";
 import {
   AppText,
-  Badge,
   Button,
   IconButton,
   Sheet,
@@ -27,7 +26,10 @@ import {
   space,
   typography,
 } from "@/constants/designTokens";
-import { starters } from "@/constants/healthContent";
+import {
+  starterPairCount,
+  starterPromptsForVisit,
+} from "@/constants/healthContent";
 import { SavedConversations } from "@/components/savedConversations";
 import { useAuth } from "@/hooks/useAuth";
 import { usePrototype } from "@/hooks/usePrototype";
@@ -44,24 +46,40 @@ export default function AssistantScreen() {
   } = usePrototype();
   const { status } = useAuth();
   const signedIn = status === "ready";
-  // Sign-in is offered, but this person is a guest or part-way through it.
   const canSignIn =
     status === "guest" || status === "enrol" || status === "challenge";
   const [draft, setDraft] = useState("");
   const [confirm, setConfirm] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
   const [focused, setFocused] = useState(false);
+  const [starterVisit, setStarterVisit] = useState(0);
+  const skipNextStarterCycle = useRef(true);
   const list = useRef<ComponentRef<typeof ScrollView>>(null);
+
+  useFocusEffect(
+    useCallback(() => {
+      if (skipNextStarterCycle.current) {
+        skipNextStarterCycle.current = false;
+        return;
+      }
+      setStarterVisit((v) => (v + 1) % starterPairCount);
+    }, []),
+  );
+
+  const starterPrompts = starterPromptsForVisit(starterVisit);
+
   useEffect(() => {
     if (messages.length) list.current?.scrollToEnd({ animated: false });
     else list.current?.scrollTo({ y: 0, animated: false });
   }, [messages.length, busy]);
+
   function submit() {
     if (draft.trim() && !busy) {
       send(draft);
       setDraft("");
     }
   }
+
   return (
     <KeyboardAvoidingView
       style={ui.flex}
@@ -73,10 +91,12 @@ export default function AssistantScreen() {
         </View>
         <View style={ui.flex}>
           <AppText variant="heading" tone="forest">
-            Your health companion
+            Assistant
           </AppText>
           <AppText variant="caption" tone="body">
-            A safe space for everyday questions
+            {assistantOnline
+              ? "Malaria information only"
+              : "Unavailable right now"}
           </AppText>
         </View>
         {signedIn && (
@@ -92,14 +112,6 @@ export default function AssistantScreen() {
           onPress={() => (messages.length ? setConfirm(true) : setDraft(""))}
         />
       </View>
-      <View style={styles.scope}>
-        <HealthIcon name="info" size={layout.smallIcon} />
-        <AppText variant="caption" tone="body" style={ui.flex}>
-          {assistantOnline
-            ? "Live assistant · Malaria information only, never a diagnosis."
-            : "Assistant offline · Set EXPO_PUBLIC_API_BASE_URL and restart Expo."}
-        </AppText>
-      </View>
       {canSignIn && (
         <Pressable
           accessibilityRole="link"
@@ -108,9 +120,7 @@ export default function AssistantScreen() {
         >
           <HealthIcon name="lock" size={layout.smallIcon} />
           <AppText variant="caption" tone="forest" style={ui.flex}>
-            {status === "guest"
-              ? "Sign in to save your conversations. Optional."
-              : "Finish two-factor sign-in to save your conversations."}
+            {status === "guest" ? "Sign in to save chats" : "Finish sign-in to save"}
           </AppText>
           <HealthIcon name="chevron" size={layout.smallIcon} />
         </Pressable>
@@ -127,19 +137,11 @@ export default function AssistantScreen() {
       >
         {messages.length === 0 ? (
           <View style={styles.empty}>
-            <View style={styles.heroIcon}>
-              <HealthIcon name="chat" size={space.xxl} />
-            </View>
-            <Badge>LET’S MAKE HEALTH A LITTLE CLEARER</Badge>
             <AppText variant="display" tone="forest" style={styles.center}>
-              What’s on{"\n"}your mind?
-            </AppText>
-            <AppText tone="body" style={styles.center}>
-              Questions about prevention, symptoms or testing? Start here. Your
-              wellbeing matters.
+              Ask a malaria question
             </AppText>
             <View style={styles.prompts}>
-              {starters.map((question) => (
+              {starterPrompts.map((question) => (
                 <Pressable
                   accessibilityRole="button"
                   key={question}
@@ -159,15 +161,15 @@ export default function AssistantScreen() {
           </View>
         ) : (
           <>
-            <AppText variant="caption" tone="body" style={styles.center}>
-              {!signedIn
-                ? "This session · Conversations are not saved"
-                : unsaved
-                  ? "The latest reply could not be saved to your account"
+            {signedIn && (
+              <AppText variant="caption" tone="body" style={styles.center}>
+                {unsaved
+                  ? "Last reply was not saved"
                   : conversationId
-                    ? "Saved to your account"
-                    : "Signed in · This conversation will be saved"}
-            </AppText>
+                    ? "Saved"
+                    : "Saving…"}
+              </AppText>
+            )}
             {messages.map((message) => (
               <View
                 key={message.id}
@@ -182,21 +184,11 @@ export default function AssistantScreen() {
                   <View accessibilityRole="alert" style={styles.escalation}>
                     <HealthIcon name="alert" />
                     <AppText variant="subheading" tone="forest">
-                      Please seek urgent care
+                      Seek urgent care
                     </AppText>
                     <AppText>
                       Call 112 in Nigeria or go to the nearest emergency
-                      department. Do not wait for this chat.
-                    </AppText>
-                  </View>
-                )}
-                {message.role === "assistant" && (
-                  <View style={ui.row}>
-                    <HealthIcon name="sparkle" size={layout.smallIcon} />
-                    <AppText variant="label" tone="forest">
-                      {message.reply?.error
-                        ? "9ja Health · Couldn’t answer"
-                        : "9ja Health · Assistant"}
+                      department.
                     </AppText>
                   </View>
                 )}
@@ -219,10 +211,6 @@ export default function AssistantScreen() {
                         url={source.url}
                       />
                     ))}
-                    <AppText variant="caption" tone="body">
-                      Linked sources for further reading · not a live check of
-                      this answer
-                    </AppText>
                   </View>
                 )}
                 <AppText variant="caption" tone="body">
@@ -243,8 +231,7 @@ export default function AssistantScreen() {
         <View style={styles.emergencyNote}>
           <HealthIcon name="alert" size={layout.smallIcon} />
           <AppText variant="caption" tone="body" style={ui.flex}>
-            Severe or worrying symptoms? Seek medical care. For an emergency in
-            Nigeria, call 112 or go to the nearest emergency department.
+            Emergency? Call 112 or go to the nearest emergency department.
           </AppText>
         </View>
       </ScrollView>
@@ -252,7 +239,7 @@ export default function AssistantScreen() {
         <View style={[styles.composer, focused && ui.focused]}>
           <TextInput
             accessibilityLabel="Your health question"
-            placeholder="Ask a health question…"
+            placeholder="Ask about malaria…"
             placeholderTextColor={palette.body}
             value={draft}
             onChangeText={setDraft}
@@ -273,10 +260,6 @@ export default function AssistantScreen() {
             <HealthIcon name="send" />
           </Pressable>
         </View>
-        <AppText variant="caption" tone="body" style={styles.center}>
-          Not a diagnosis or a replacement for a health professional. Avoid
-          sharing personal details.
-        </AppText>
       </View>
       <Sheet
         visible={confirm}
@@ -285,8 +268,8 @@ export default function AssistantScreen() {
       >
         <AppText tone="body">
           {signedIn
-            ? "This starts a new conversation. The current one stays in your saved conversations."
-            : "This will clear your current conversation. Messages are only held in this session and cannot be recovered."}
+            ? "Start a new conversation. The current one stays in your saved list."
+            : "Clear this session’s messages."}
         </AppText>
         <Button
           onPress={() => {
@@ -294,10 +277,10 @@ export default function AssistantScreen() {
             setConfirm(false);
           }}
         >
-          Start a new conversation
+          New conversation
         </Button>
         <Button secondary onPress={() => setConfirm(false)}>
-          Keep this conversation
+          Keep chatting
         </Button>
       </Sheet>
       <Sheet
@@ -305,7 +288,6 @@ export default function AssistantScreen() {
         title="Saved conversations"
         onClose={() => setHistoryOpen(false)}
       >
-        {/* Mounted only while open, so the list is fresh each time. */}
         {historyOpen && (
           <SavedConversations onOpened={() => setHistoryOpen(false)} />
         )}
@@ -329,15 +311,6 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
-  scope: {
-    backgroundColor: palette.cream,
-    flexDirection: "row",
-    padding: space.md,
-    marginHorizontal: space.lg,
-    gap: space.sm,
-    alignItems: "center",
-    borderRadius: radius.sm,
-  },
   signIn: {
     flexDirection: "row",
     alignItems: "center",
@@ -352,14 +325,6 @@ const styles = StyleSheet.create({
   },
   messages: { padding: space.lg, gap: space.xl, flexGrow: 1 },
   empty: { alignItems: "center", gap: space.lg, paddingTop: space.xl },
-  heroIcon: {
-    width: layout.heroIcon,
-    height: layout.heroIcon,
-    borderRadius: radius.xl,
-    backgroundColor: palette.softGreen,
-    justifyContent: "center",
-    alignItems: "center",
-  },
   center: { textAlign: "center" },
   prompts: { width: "100%", gap: space.sm, marginTop: space.md },
   prompt: {

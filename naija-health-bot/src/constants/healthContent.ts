@@ -16,6 +16,14 @@ export const starters = [
   "Why does rain matter for malaria here?",
 ];
 
+export const starterPairCount = Math.ceil(starters.length / 2);
+
+/** Two suggested prompts per assistant visit, cycling through `starters`. */
+export function starterPromptsForVisit(visitIndex: number): string[] {
+  const pair = visitIndex % starterPairCount;
+  return starters.slice(pair * 2, pair * 2 + 2);
+}
+
 export const states = [
   "Abia",
   "Adamawa",

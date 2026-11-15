@@ -5,41 +5,41 @@ import {
   Card,
   Disclaimer,
   Screen,
-  SourceLink,
+  SectionHeading,
   ui,
 } from "@/components/healthUi";
 import { HealthIcon } from "@/components/healthIcon";
 import { layout, palette, radius, space } from "@/constants/designTokens";
-import {
-  contentDate,
-  preventionGroups,
-  sources,
-} from "@/constants/healthContent";
+import { preventionGroups } from "@/constants/healthContent";
+import { useEnvironment } from "@/hooks/useEnvironment";
 import { usePrototype } from "@/hooks/usePrototype";
 
 export default function PreventionScreen() {
   const { completed, toggleTask } = usePrototype();
+  const { state, weather } = useEnvironment();
+  const area = state ?? "your area";
+
   return (
-    <Screen
-      title="A little care, every day"
-      subtitle="Small, practical steps for your wellbeing."
-    >
+    <Screen title="Prevention" subtitle="Likelihood report and tips">
       <Card soft>
-        <View style={ui.row}>
-          <HealthIcon name="shield" />
-          <Badge>PREVENTION, NOT PREDICTION</Badge>
-        </View>
+        <Badge>MODEL REPORT</Badge>
         <AppText variant="heading" tone="forest">
-          You don’t need a forecast to build good habits.
+          Malaria likelihood · {area}
         </AppText>
-        <AppText tone="body">
-          Use this gentle checklist to explore general prevention tips. Tick a
-          step when you’ve done it — no scores, no pressure.
-        </AppText>
-        <AppText variant="caption" tone="body">
-          Session-only checklist · {completed.length} of 6 steps checked
+        {weather ? (
+          <AppText tone="body">
+            {weather.summary} · {weather.temperatureC}°C · {weather.humidityPct}%
+            humidity · {weather.rainfallMm} mm rain
+          </AppText>
+        ) : (
+          <AppText tone="body">Weather appears once location is set.</AppText>
+        )}
+        <AppText variant="subheading" tone="forest">
+          Report not ready yet
         </AppText>
       </Card>
+
+      <SectionHeading title="Tips" />
       {preventionGroups.map((group) => (
         <View key={group.title} style={ui.stack}>
           <View style={ui.row}>
@@ -85,18 +85,12 @@ export default function PreventionScreen() {
           })}
         </View>
       ))}
-      <SourceLink
-        title={`Educational guidance · WHO Malaria · ${contentDate}`}
-        url={sources.malaria}
-      />
-      <AppText variant="caption" tone="body">
-        General educational guidance, not personalised medical advice. Checklist
-        ticks are not stored after reload.
-      </AppText>
+
       <Disclaimer />
     </Screen>
   );
 }
+
 const styles = StyleSheet.create({
   task: {
     borderWidth: layout.line,

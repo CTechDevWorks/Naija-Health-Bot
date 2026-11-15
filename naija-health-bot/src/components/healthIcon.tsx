@@ -37,6 +37,7 @@ const names = {
   sun: { ios: "sun.max", android: "sunny", web: "sunny" },
   drop: { ios: "drop", android: "water_drop", web: "water_drop" },
   rain: { ios: "cloud.rain", android: "rainy", web: "rainy" },
+  cloud: { ios: "cloud", android: "cloud", web: "cloud" },
   wind: { ios: "wind", android: "air", web: "air" },
   leaf: { ios: "leaf", android: "eco", web: "eco" },
   heart: { ios: "heart", android: "favorite", web: "favorite" },

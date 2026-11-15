@@ -1,172 +1,190 @@
 # 9ja Health
 
-A mobile-first health and environmental intelligence companion for Nigeria, built
-with React Native, Expo SDK 58, TypeScript and Expo Router.
+**AI-powered malaria awareness and health intelligence for Nigeria — mobile-first, source-grounded, and built for everyday use.**
 
-## Current implementation
+9ja Health helps people understand malaria risk in context, take practical prevention steps, and get **trustworthy answers** from a curated knowledge base — without replacing doctors or guessing personal diagnoses.
 
-This repository currently contains an **interactive UI prototype**, not the
-complete prediction/AI system described in the product and technical briefs.
-The fictional demo profile is Ada Okafor. No account or login is required.
+---
 
-### Screens and navigation
+## Why this matters
 
-The repository's locked information architecture takes precedence over the later
-“Naija Health Bot” UI brief:
+Malaria still kills more than **600,000 people per year** worldwide, mostly in sub-Saharan Africa. Nigeria carries one of the largest burdens of disease on the continent. At the same time:
 
-- **Home:** local outlook preview, honest unavailable weather state, prevention,
-  official-source entry, prominent assistant card and starter questions.
-- **Outlook:** area-level explanation, limitations and unavailable trend state.
-- **Prevention:** six session-only checklist steps in the four required groups.
-- **Assistant:** distinct bubbles, prepared source-linked examples, loading,
-  unknown-topic fallback, new-conversation confirmation and emergency guidance.
-- **Updates:** searchable/filterable directory of official Nigerian authorities.
-  This is not a fabricated news feed.
-- **Explore:** Home header book button or Profile → Explore; searchable categories,
-  educational article sheets and expandable FAQs.
-- **Profile & preferences:** Home header avatar; fictional profile, session chat
-  history, manual state picker, 15% larger-text toggle, in-app reminder preference,
-  privacy, support and about sheets. Profile is not an authentication system.
+- **Misinformation spreads faster than clinics can respond.** People search symptoms online, buy the wrong medicines, or delay testing.
+- **Transmission follows weather and place**, but most apps either show raw forecasts or generic health articles — not a clear, local story.
+- **Official guidance exists** (WHO, NMEP, NCDC) but is scattered across PDFs, portals, and news sites that few people read end-to-end.
 
-Bottom tabs remain **Home / Outlook / Prevention / Assistant / Updates**.
-Explore and Profile are secondary routes, not replacement tabs.
+9ja Health is aimed at that gap: **actionable, honest information** for people living in Nigeria, with strict safety boundaries and named sources — the same need that global health programmes emphasise for digital health in LMICs, applied to one high-impact disease first.
 
-## Visual system
+---
 
-User-supplied primary green `#7DBA87`, warm cream `#F5ECD4`, main text `#232323`
-and secondary `#78847B`, with Inter and light mode. Supporting accessible values
-and decisions are recorded in `prompts-and-guides/9ja-health-design.md` §17.
+## The problem → our response
 
-`src/constants/designTokens.ts` centralises colour, spacing, radius and type.
-`src/components/healthUi.tsx` provides shared buttons, cards, text, chips, inputs,
-source links, disclaimer, modal sheets and rows. Icons reuse `expo-symbols` with
-SF Symbols on iOS and Material Symbols on Android/web.
+| Problem | What 9ja Health does |
+|--------|----------------------|
+| People need malaria facts they can trust, not model hallucinations | **Retrieval-augmented assistant (RAG)** over a curated knowledge base (WHO and allied sources), loaded into Supabase; answers are blocked if nothing relevant is retrieved |
+| Chatbots often diagnose, dose, or wander off-topic | **Server-side guardrails**: malaria-only scope, no dosing, medicine names limited to retrieved text; off-topic and unsafe prompts refused |
+| “Risk” apps imply personal predictions | **Area-level framing only** — population patterns and environment, never “you have malaria” |
+| Weather affects mosquitoes but users do not see the link | **Live local weather** on Home; **Prevention** screen reserved for **ML likelihood + tips** once the model is connected |
+| Health news is noisy | **Updates** screen + backend **daily scrape → AI summary → 24h report** pipeline (see `backend/api/reports.py`) |
+| Secrets and keys must not live in the app | **FastAPI backend** holds LLM and Supabase service keys; the Expo app only calls `EXPO_PUBLIC_API_BASE_URL` |
 
-Inter is bundled at `assets/fonts/Inter.ttf` via the existing `expo-font`
-dependency and works without a Google Fonts request. Its SIL Open Font License
-is included alongside it. No production logo or app-icon artwork is claimed;
-the current native icon/splash assets are inherited Expo placeholders.
+---
 
-## Prototype boundaries and safety
+## What you get in the app
 
-- **The mobile app is not connected to any backend.** No ML, RAG, live weather,
-  Zapier ingestion or push service exists yet; see the original technical brief.
-  A FastAPI AI assistant service now lives in `backend/` (see below), but the app
-  does not call it yet.
-- The Assistant screen calls `backend` via `EXPO_PUBLIC_API_BASE_URL`
-  (`src/services/assistantApi.ts`). Set that in `naija-health-bot/.env` and
-  restart Expo after changing it.
-- Sample replies and educational content have visible source links/content dates.
-  Dates identify prototype content, not source publication or live verification.
-  Medical copy needs qualified review before release.
-- No fabricated predictions, risk categories, weather numbers or health reports.
-- Emergency copy is always available. A small keyword check demonstrates the
-  escalation UI; it is **not validated triage** and can miss emergencies.
-  In Nigeria, call **112** or seek the nearest emergency department when needed.
-- No diagnoses, prescriptions, medication recommendations or dosing.
-- All state stays in memory: messages, checklist ticks, manual region and settings
-  disappear on reload. No sensitive data should be entered.
-- The notification setting only controls a visible Home reminder card. It does
-  not request permissions, schedule alerts or send push notifications.
-- GPS is not accessed. All 36 states and FCT are available in the manual picker.
+Bottom tabs: **Home · Outlook · Prevention · Assistant · Updates** (Profile from Home).
 
-No environment variables or API credentials are needed for the current prototype.
-Do not put future LLM or database secrets in the mobile app.
+| Screen | Purpose | Status |
+|--------|---------|--------|
+| **Home** | Location, live weather (incl. feels-like & cloud cover), shortcuts to outlook, prevention, updates, and the assistant | Live weather needs `EXPO_PUBLIC_OPENWEATHER_API_KEY` |
+| **Outlook** | Area **trends** from datasets / models (not personal diagnosis) | UI ready; charts when data + model are wired |
+| **Prevention** | **Daily AI report**: malaria likelihood from weather + model, plus tips | UI ready; model output pending |
+| **Assistant** | Malaria Q&A with RAG + guardrails; optional sign-in to save chats | Live when backend + Supabase RAG are configured |
+| **Updates** | One **daily health briefing** (refreshed every 24 hours) | Backend job available; app consumes `/api/v1/health-reports` when connected |
 
-## Local setup
+**Safety (non-negotiable):** not a diagnostic tool; emergencies → **112** in Nigeria; no prescriptions or dosing; medical copy should be reviewed before wide release.
 
-Requirements: a Node.js version supported by Expo SDK 58 and npm.
+---
+
+## Architecture
+
+```mermaid
+flowchart LR
+  subgraph mobile["Expo app (naija-health-bot)"]
+    GPS[GPS / state picker]
+    OWM[OpenWeather]
+    UI[Tabs UI]
+    GPS --> UI
+    OWM --> UI
+    UI --> API[HTTPS]
+  end
+
+  subgraph backend["FastAPI backend"]
+    API --> Chat[Chat + guardrails]
+    Chat --> RAG[rag-query / Supabase]
+    Chat --> LLM[BluesMinds LLM]
+    Jobs[Daily updates job] --> Store[(Supabase)]
+    RAG --> KB[(kb_documents / kb_sections)]
+  end
+
+  subgraph future["Planned"]
+  ML[Malaria ML model]
+  MAP[Outlook datasets]
+  ML --> UI
+  MAP --> UI
+  end
+```
+
+**Knowledge base:** Markdown sections under `backend/knowledge_base/RAGInfo/documents/`, loaded with `python -m scripts.load_knowledge`. SQL and edge functions: `backend/supabase/README.md`.
+
+**Auth (optional):** Supabase email + password + **TOTP**; saved conversations via REST. Guests can chat without an account.
+
+---
+
+## Repository layout
+
+```text
+naija-health-bot/          React Native + Expo Router mobile app
+  src/app/                 Screens (tabs + profile / account)
+  src/services/            Assistant API, weather, Supabase client
+  src/components/          Shared UI, weather strip, location picker
+backend/                   FastAPI service (deployed e.g. on Render)
+  api/                     chat, health, conversations, health-reports, jobs
+  guardrails/              Input/output safety
+  services/                RAG retrieval, chat pipeline, reports pipeline
+  knowledge_base/          Approved sources + RAG document corpus
+  supabase/                SQL migrations + rag-embed / rag-query functions
+  scripts/                 load_knowledge, run_daily_updates
+prompts-and-guides/        Product, design, and engineering reference
+```
+
+The old workshop `RAG/` folder at the repo root is not part of the production app and can be removed.
+
+---
+
+## Quick start
+
+### Mobile app
+
+Requirements: Node.js compatible with **Expo SDK 58**, npm.
 
 ```sh
 cd naija-health-bot
 npm ci
+cp .env.example .env    # if present; set keys below
 npx expo start
 ```
 
-Use a compatible Expo development build for native testing. Do not generate or
-hand-edit `ios/` or `android/` unless performing the documented native workflow.
-Expo SDK 58 compatibility guidance is at
-<https://docs.expo.dev/versions/v58.0.0/>.
-
-### Checks
+| Variable | Purpose |
+|----------|---------|
+| `EXPO_PUBLIC_API_BASE_URL` | Backend root, e.g. `http://127.0.0.1:8000` or your Render URL |
+| `EXPO_PUBLIC_OPENWEATHER_API_KEY` | Current weather on Home |
+| `EXPO_PUBLIC_SUPABASE_URL` / `EXPO_PUBLIC_SUPABASE_ANON_KEY` | Optional sign-in and saved chats |
 
 ```sh
-cd naija-health-bot
-npx expo lint
 npx tsc --noEmit
-node --test tests/demoAssistant.test.cjs
+npx expo lint
 ```
 
-The small Node test harness transpiles only the pure demo-response module with
-the installed TypeScript compiler; it does not replace future native UI tests.
+### Backend (assistant + RAG + jobs)
 
-The implementation was checked with lint, TypeScript, seven content/safety/contrast
-tests and successful Figma bootstrap/deploy/deploy-preview verification. Chromium
-interaction checks covered all seven routes at 320, 390, 768 and 1440px, plus
-130% text sizing and landscape chat. Native iOS/Android device or simulator testing
-has not been performed; it is required before native distribution.
-
-### Backend (AI assistant)
-
-`backend/` is a FastAPI service that answers assistant questions through an LLM
-provider, with server-side guardrails. It needs Python 3 and a BluesMinds API key
-in `backend/.env` (copy `backend/.env.example`). The key stays on the server.
+Requirements: **Python 3.11+** (3.14 supported in dev), virtualenv.
 
 ```sh
 cd backend
 python -m venv .venv
-.venv\Scripts\activate        # macOS/Linux: source .venv/bin/activate
+.venv\Scripts\activate          # macOS/Linux: source .venv/bin/activate
 pip install -r requirements-dev.txt
+cp .env.example .env            # fill BLUESMINDS_API_KEY, Supabase keys for RAG/accounts
 uvicorn main:app --reload --port 8000
 pytest
 ```
 
-Endpoints: `GET /api/v1/health` and `POST /api/v1/chat`; interactive docs at
-`/docs`. There is no retrieval (RAG) yet: answers come from the model, and the
-sources returned are pointers to the approved list in
-`backend/knowledge_base/sources.json`, not proof the answer was checked against them.
-
-### Figma Make preview and publishing verification
-
-Root `.figma/make/install` runs `npm ci` in the nested app.
-`.figma/make/dev` runs Expo web on the supplied port with watch mode enabled.
-Do not start a second server in the hosted workspace.
+**RAG setup (one-time):** run `supabase/chat_history.sql` and `supabase/rag.sql` in the Supabase SQL editor; deploy `rag-embed` and `rag-query` from `backend/`; then:
 
 ```sh
-figma make verify-bootstrap
-figma make verify-deploy
-figma make verify-deploy-preview
+.\.venv\Scripts\python.exe -m scripts.load_knowledge
 ```
 
-Both deploy scripts export static Expo web output to `naija-health-bot/dist`
-before handing it to the Figma static adapter. Native distribution is separate
-and requires Expo/EAS build/signing configuration.
+Confirm: `GET /api/v1/health` → `"rag": true`, `"accounts": true` when keys are set.
 
-## Structure
+**Daily updates job:** `POST /api/v1/jobs/daily-health-updates` with header `X-Job-Secret` (see `UPDATES_JOB_SECRET` in `.env.example`). List reports: `GET /api/v1/health-reports`.
 
-```text
-naija-health-bot/
-  assets/fonts/           Bundled Inter and licence
-  src/app/                Expo Router screens and root layout
-  src/components/         Shared native UI, shell, location/outlook/weather views
-  src/constants/          Design tokens and curated educational content
-  src/hooks/              Session-only prototype state
-  src/services/           Explicit demo response selection, not an AI integration
-  tests/                  Safety/boundary regression tests for the prototype
-backend/                   FastAPI AI assistant service (not yet called by the app)
-  api/                    Routes
-  services/               Chat pipeline and approved-source handling
-  ai/                     LLM provider adapter
-  guardrails/             Input and output safety checks
-  auth/                   Optional token check and rate limiting
-  prompts/                Assistant system prompt
-  knowledge_base/         Approved source list
-  tests/                  Guardrail, source and API tests
-prompts-and-guides/        Product, engineering, architecture and design authority
-.figma/make/               Hosted lifecycle and deployment configuration
-```
+Interactive API docs: `http://localhost:8000/docs`.
 
-Original repository instructions remain in `naija-health-bot/AGENTS.md` and
-`prompts-and-guides/*.md`. Future backend work should follow the documented
-React Native → FastAPI → validated services architecture, keep keys server-side,
-and integrate real sources before presenting live results.
+---
+
+## What is implemented vs next
+
+**Shipped in this repo**
+
+- Production-shaped **mobile UI** (streamlined tabs, weather strip, assistant with rotating prompts)
+- **FastAPI** chat with model fallbacks, rate limits, optional **Supabase auth + history**
+- **RAG** corpus (~127 malaria sections), similarity search, load script with retries
+- **Guardrails** (scope, medicines, dosages, urgency hints)
+- **Daily health-updates** backend (scrape → summarise → store)
+- **Keep-alive** for free-tier hosting
+
+**Still to wire**
+
+- **ML malaria likelihood** model → Prevention screen report
+- **Outlook** charts from MAP / national datasets
+- **Updates** tab fully bound to `health-reports` in the app
+- End-to-end **scheduled cron** for daily job in production
+- Clinical / content review before public health deployment
+
+---
+
+## Contributing and documentation
+
+- Design tokens and IA: `prompts-and-guides/`
+- Backend Supabase: `backend/supabase/README.md`
+- Do **not** commit `.env` files or service-role keys
+- LLM and scraping keys stay on the server only
+
+---
+
+## Licence and disclaimer
+
+9ja Health provides **general health information and area-level context**. It is **not** medical advice, diagnosis, or treatment. For illness or emergency, contact a qualified professional; in Nigeria call **112** for emergencies.

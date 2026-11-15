@@ -119,13 +119,6 @@ export default function ProfileScreen() {
               }
               onPress={() => setPanel("history")}
             />
-            <View style={ui.separator} />
-            <RowLink
-              icon="book"
-              title="Explore health topics"
-              subtitle="Learn something good for you"
-              onPress={() => router.push("/explore")}
-            />
           </Card>
         </View>
         <View style={ui.smallStack}>

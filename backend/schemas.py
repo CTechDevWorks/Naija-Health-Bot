@@ -83,3 +83,39 @@ class HealthResponse(BaseModel):
     # knowledge base has been loaded; without this the assistant answers without
     # retrieved passages.
     rag: bool = False
+
+
+class HealthReportSource(BaseModel):
+    id: str
+    slug: str
+    name: str
+    region: str | None = None
+
+
+class HealthReportItem(BaseModel):
+    id: str
+    title: str
+    summary: str
+    original_url: str
+    published_at: str
+    ingested_at: str | None = None
+    topic: str
+    location_scope: str
+    urgency: str
+    is_ai_summary: bool = True
+    source: HealthReportSource | None = None
+
+
+class HealthReportListResponse(BaseModel):
+    reports: list[HealthReportItem]
+    count: int
+
+
+class DailyUpdatesJobResponse(BaseModel):
+    status: str
+    triggered_for_date: str
+    job_run_id: str | None = None
+    items_fetched: int
+    items_inserted: int
+    items_skipped: int
+    error_message: str | None = None

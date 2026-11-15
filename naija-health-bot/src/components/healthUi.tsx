@@ -1,9 +1,10 @@
-import { PropsWithChildren, ReactNode, useState } from "react";
+import { PropsWithChildren, ReactElement, ReactNode, useState } from "react";
 import {
   ActivityIndicator,
   Linking,
   Modal,
   Pressable,
+  RefreshControl,
   ScrollView,
   StyleProp,
   StyleSheet,
@@ -174,6 +175,7 @@ export function Screen({
   back = false,
   backTo = "/",
   trailing,
+  refreshControl,
 }: PropsWithChildren<{
   title?: string;
   subtitle?: string;
@@ -181,6 +183,7 @@ export function Screen({
   /** Where the back button goes. Home unless a screen says otherwise. */
   backTo?: Href;
   trailing?: ReactNode;
+  refreshControl?: ReactElement<typeof RefreshControl>;
 }>) {
   return (
     <ScrollView
@@ -188,6 +191,7 @@ export function Screen({
       contentContainerStyle={ui.screen}
       showsVerticalScrollIndicator={false}
       keyboardShouldPersistTaps="handled"
+      refreshControl={refreshControl}
     >
       {title && (
         <View style={ui.pageHeader}>
