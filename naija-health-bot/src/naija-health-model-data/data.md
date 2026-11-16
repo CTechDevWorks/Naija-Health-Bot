@@ -1,1 +1,0 @@
-This folder is to contain the data to be put in by the google colab
