@@ -28,24 +28,26 @@ Malaria still kills more than **600,000 people per year** worldwide, mostly in s
 | People need malaria facts they can trust, not model hallucinations | **Retrieval-augmented assistant (RAG)** over a curated knowledge base (WHO and allied sources), loaded into Supabase; answers are blocked if nothing relevant is retrieved |
 | Chatbots often diagnose, dose, or wander off-topic | **Server-side guardrails**: malaria-only scope, no dosing, medicine names limited to retrieved text; off-topic and unsafe prompts refused |
 | “Risk” apps imply personal predictions | **Area-level framing only** — population patterns and environment, never “you have malaria” |
-| Weather affects mosquitoes but users do not see the link | **Live local weather** on Home (OpenWeather); **Prevention** / **Outlook** will use **MAP + NASA POWER–trained models** at state/FCT level (see below) |
-| Planners lack simple incidence foresight | **Random Forest research** on 25 years of state incidence + climate; charts in **Outlook** when the API is connected |
-| Health news is noisy | **Updates** screen + backend **daily scrape → AI summary → 24h report** pipeline (see `backend/api/reports.py`) |
-| Secrets and keys must not live in the app | **FastAPI backend** holds LLM and Supabase service keys; the Expo app only calls `EXPO_PUBLIC_API_BASE_URL` |
+| Weather affects mosquitoes but users do not see the link | **Live local weather** on Home via **OpenWeather**; Outlook rainfall from **NASA POWER** yearly series |
+| Planners / users lack simple incidence foresight | **Outlook** charts from bundled **MAP Trends** + **NASA POWER** data (state/FCT); research Random Forest models documented below for future Prevention/API wiring |
+| Health news is noisy | **Updates** feed: allowlisted scrape → AI write-up → Supabase → `GET /api/v1/health-reports`; optional **Expo push** when new rows publish |
+| Secrets and keys must not live in the app | **FastAPI backend** holds LLM and Supabase service keys; the Expo app only calls `EXPO_PUBLIC_*` values |
 
 ---
 
-## What you get in the app
+## Current product status (as of this README)
 
-Bottom tabs: **Home · Outlook · Prevention · Assistant · Updates** (Profile from Home).
+Bottom tabs: **Home · Outlook · Prevention · Assistant · Updates**. **Profile** (and optional **Account**) open from the Home avatar.
 
-| Screen | Purpose | Status |
-|--------|---------|--------|
-| **Home** | Location, live weather (incl. feels-like & cloud cover), shortcuts to outlook, prevention, updates, and the assistant | Live weather needs `EXPO_PUBLIC_OPENWEATHER_API_KEY` |
-| **Outlook** | Area **trends** from datasets / models (not personal diagnosis) | UI ready; charts when data + model are wired |
-| **Prevention** | **Daily AI report**: malaria likelihood from weather + model, plus tips | UI ready; model output pending |
-| **Assistant** | Malaria Q&A with RAG + guardrails; optional sign-in to save chats | Live when backend + Supabase RAG are configured |
-| **Updates** | One **daily health briefing** (refreshed every 24 hours) | Backend job available; app consumes `/api/v1/health-reports` when connected |
+| Screen | What works today | Needs config / still open |
+|--------|------------------|---------------------------|
+| **Home** | GPS → Nigerian state, live OpenWeather strip (temp, feels-like, humidity, rain, wind, cloud cover), outlook teaser, prevention & updates shortcuts, assistant entry | `EXPO_PUBLIC_OPENWEATHER_API_KEY`; location permission or manual state |
+| **Outlook** | State/FCT **incidence line chart** (MAP) vs Nigeria average, **rainfall bars** (NASA POWER), insight cards, honest “not personal risk” copy | Bundled `src/data/outlook.json` (rebuild via `npm run build:outlook-data`) |
+| **Prevention** | Session checklist by tip group; shows current weather context | **Daily AI / model likelihood report** still placeholder (“Report not ready yet”) |
+| **Assistant** | Live chat to FastAPI; RAG + guardrails; guests OK; signed-in users save history | `EXPO_PUBLIC_API_BASE_URL` + BluesMinds + Supabase RAG |
+| **Updates** | Pull-to-refresh feed of published AI write-ups + official authority directory | Backend + Supabase `health_reports`; optional push tokens SQL |
+| **Profile** | Location, larger text, notifications (push + in-app reminder), privacy/about, explore removed | Push needs physical device + `push_tokens.sql` |
+| **Account** | Optional Supabase email/password + TOTP | `EXPO_PUBLIC_SUPABASE_*` + backend Supabase keys |
 
 **Safety (non-negotiable):** not a diagnostic tool; emergencies → **112** in Nigeria; no prescriptions or dosing; medical copy should be reviewed before wide release.
 
@@ -59,8 +61,10 @@ flowchart LR
     GPS[GPS / state picker]
     OWM[OpenWeather]
     UI[Tabs UI]
+    Bundled[outlook.json MAP + POWER]
     GPS --> UI
     OWM --> UI
+    Bundled --> UI
     UI --> API[HTTPS]
   end
 
@@ -69,6 +73,7 @@ flowchart LR
     Chat --> RAG[rag-query / Supabase]
     Chat --> LLM[BluesMinds LLM]
     Jobs[Daily updates job] --> Store[(Supabase)]
+    Jobs --> Push[Expo Push API]
     RAG --> KB[(kb_documents / kb_sections)]
   end
 
@@ -86,9 +91,184 @@ flowchart LR
 
 ---
 
-## Malaria modelling (Outlook & Prevention)
+## Features in detail
 
-This section summarises the **Neuraxis** prototype documented in the hackathon submission (`Naija Health Bot` PDF / Colab notebook). It is **not** a validated public-health forecasting system yet; it defines what we are wiring into the app.
+This section explains **each major feature** as it exists in the repo, including the technical path end-to-end.
+
+### 1. Location → Nigerian state
+
+**User-facing.** On launch (and on refresh), the app asks for **foreground** location only. If granted, Home shows the resolved state (e.g. “Lagos”) and wires weather + Outlook to that area. If denied, outside Nigeria, or unresolved, the UI offers a **manual picker** of all 36 states + FCT.
+
+**Technical path.**
+
+1. `expo-location` → `requestForegroundPermissionsAsync` / `getCurrentPositionAsync` (`Accuracy.Balanced`) in `src/services/locationService.ts`.
+2. Coordinates are reverse-geocoded with **BigDataCloud**’s free client endpoint (`reverse-geocode-client`) — no API key.
+3. Response `principalSubdivision` (and fallbacks) is matched against the canonical list in `src/constants/nigeriaStates.ts` (`matchNigerianState`).
+4. Country code must be `NG`; otherwise `LocationServiceError` with code `outside_nigeria`.
+5. Manual picks use **state-capital centroids** from the same constants file so weather still has a lat/lon.
+6. State is held in `EnvironmentProvider` (`src/hooks/useEnvironment.tsx`): location is shown **before** weather finishes so the UI never looks blank while OpenWeather loads.
+
+**Privacy note.** Only foreground GPS; no background tracking. Preference copy lives under Profile → Privacy.
+
+---
+
+### 2. Live weather (OpenWeather)
+
+**User-facing.** Home **Weather strip** shows temperature, feels-like, humidity, rainfall, wind, cloud cover, a short summary, source label, and last-updated time. Refresh re-requests GPS + weather. Prevention and Outlook also read the same snapshot when present.
+
+**Technical path.**
+
+1. Key: `EXPO_PUBLIC_OPENWEATHER_API_KEY` in `naija-health-bot/.env` (baked into the JS bundle — fine for a free demo key; production should proxy).
+2. `fetchCurrentWeather` in `src/services/weatherService.ts` calls  
+   `GET https://api.openweathermap.org/data/2.5/weather?lat=&lon=&appid=&units=metric`.
+3. Client uses a **hard Promise.race timeout** (~12s) plus `AbortController` so a hung network cannot spin forever (earlier Open-Meteo attempts hung on some Nigerian networks).
+4. Mapping: `main.temp` / `feels_like` / `humidity`, `wind.speed` (m/s → km/h × 3.6), `rain.1h` or `rain.3h`, `clouds.all`, `weather[0].description`, `dt` → ISO.
+5. HTTP **401** / **429** surface clear messages (bad key / rate limit). Missing key fails fast with setup instructions.
+6. UI: `WeatherStrip`, `OutlookCard` teaser; status machine in `useEnvironment`: `loading` | `ready` | `needs_manual` | `weather_error` | `error`.
+
+---
+
+### 3. Outlook (area trends + rainfall)
+
+**User-facing.** For the selected state/FCT: insight chips (latest incidence, 5-year change, vs Nigeria), a **line chart** of estimated cases per 1,000 people (area vs national average), and a **bar chart** of yearly rainfall. Copy repeatedly states this is **not personal risk**.
+
+**Technical path.**
+
+1. Data is **bundled** at build/dev time in `src/data/outlook.json` (MAP incidence + NASA POWER climate + national average series). Regenerated by:
+
+   ```sh
+   cd naija-health-bot
+   npm run build:outlook-data   # runs scripts/build-outlook-data.py over nasa_power_yearly/ CSVs
+   ```
+
+2. `getOutlookForState` / `computeInsights` / `climateForIncidenceYears` in `src/services/outlookData.ts` select the state slice and derive peak year, 5-year % change, and vs-national delta.
+3. Charts are custom **react-native-svg** components (`IncidenceTrendChart`, `RainfallTrendChart`):
+   - Width from **`onLayout`** (not screen width guesses) so bars/lines stay inside the card.
+   - X-axis labels are **thinned** by pixel budget so years do not mash together.
+   - Incidence Y-axis uses **nice ticks**; rainfall highlights wettest/latest years in meta text.
+4. Research Random Forest models (below) are **not yet** a live prediction API; Outlook today is **historical / observational** visualisation of the same data families used in the hackathon study.
+
+---
+
+### 4. Prevention
+
+**User-facing.** Grouped prevention tips (nets, environment, care-seeking, etc.) with session-only checkboxes. Shows current weather for the area when available. A “MODEL REPORT” card is present but still shows **Report not ready yet**.
+
+**Technical path.**
+
+1. Tip content: `preventionGroups` in `src/constants/healthContent.ts`.
+2. Checklist state: `usePrototype` (`completed` / `toggleTask`) — in-memory for the session.
+3. Future wiring: area likelihood from the MAP/NASA-trained model + weather features, served from backend; UI shell is already in `src/app/prevention.tsx`.
+
+---
+
+### 5. Assistant (RAG chat + guardrails)
+
+**User-facing.** Chat tab with starter prompts, streaming-style busy state, source links on answers, emergency copy when triggered, optional sign-in to save conversations.
+
+**Technical path (request lifecycle).**
+
+```text
+App askAssistant()
+  → POST /api/v1/chat  { messages[], conversation_id? }  + optional Bearer JWT
+  → backend services/chat_service.answer()
+       1. Sanitise transcript (roles, length, history cap)
+       2. Input guardrails (emergency / self-harm / injection / “live weather|news|outlook” → app referral)
+       3. Topic / pleasantry checks
+       4. RAG retrieve (Supabase edge rag-query, cosine threshold + top-k)
+       5. If no passages → fixed “no knowledge” reply (no free-form LLM inventing malaria facts)
+       6. BluesMinds chat completion with system prompt + passages + source id rules
+       7. Output guardrails: scope (malaria vs other vs app), dosage ban, medicine allow-list from retrieved text
+       8. Strip unapproved URLs; attach approved Source objects
+       9. Optional history write if authenticated
+  ← { response, model, guardrail, urgent, sources, conversation_id, saved }
+```
+
+**Key modules.**
+
+| Piece | Location |
+|-------|----------|
+| Mobile client | `src/services/assistantApi.ts` |
+| Pipeline | `backend/services/chat_service.py` |
+| Input guardrails | `backend/guardrails/scope.py` (+ topic / medicines / output) |
+| Retrieval | `backend/services/retrieval.py` → Supabase `rag-query` |
+| LLM | `backend/ai/bluesminds.py` — primary model + ordered fallbacks |
+| Rate limits | Per-IP anon + tighter limits for authed history routes |
+| System prompt | `backend/prompts/system_prompt.md` (cached) |
+
+**Auth.** Guests chat freely. With Supabase configured, email/password + **TOTP** (`src/app/account.tsx`, `useAuth`). Access token is sent only for chat/history; **service_role never ships in the app**.
+
+---
+
+### 6. Updates (daily official briefings)
+
+**User-facing.** Updates tab loads up to **5** published write-ups (title, AI summary, topic, date, link to original). Pull-to-refresh. Below: directory of NCDC / FMOH / NPHCDA-style authorities.
+
+**Technical path.**
+
+1. **Ingest job** `POST /api/v1/jobs/daily-health-updates` with header `X-Job-Secret` (`UPDATES_JOB_SECRET`), or in-process scheduler ~**07:00 Africa/Lagos** when enabled on Render (`UPDATES_SCHEDULER_ENABLED` / `RENDER_EXTERNAL_URL`).
+2. Pipeline (`backend/services/reports_pipeline.py`):
+   - Load active rows from `update_sources` (priority-ordered allowlist).
+   - Scrape feeds/pages (`reports_scraper`).
+   - Dedupe by `url_hash`.
+   - Prefer Nigeria-first sources (NCDC, FMOHSW, NPHCDA, NMEP, then WHO).
+   - AI summarise each new article (`reports_summarizer`) into title/summary/topic/urgency/location_scope.
+   - Insert `health_reports` with `is_published=true`.
+   - If `items_inserted > 0`, call **Expo Push** notify (`push_notify.py`).
+3. App: `GET /api/v1/health-reports?limit=` via `src/services/healthReportsApi.ts` → `src/app/updates.tsx`.
+4. SQL: `backend/supabase/health_reports.sql`.
+
+---
+
+### 7. Push notifications (new health updates)
+
+**User-facing.** Profile → Notifications → **New health updates**. Opt-in requests OS permission; tapping a notification opens the Updates tab.
+
+**Technical path.**
+
+1. Mobile: `expo-notifications` + `expo-device`; token via `getExpoPushTokenAsync` (`src/services/pushNotifications.ts`). Preference persisted in AsyncStorage.
+2. `POST /api/v1/push-tokens` `{ token, platform, enabled }` upserts `device_push_tokens` (service_role only; RLS denies anon). SQL: `backend/supabase/push_tokens.sql`.
+3. On publish, backend batches Expo Push API (`https://exp.host/--/api/v2/push/send`) with `data.screen = "updates"`. Stale `DeviceNotRegistered` tokens are soft-disabled.
+4. Requires a **physical device** (simulators/web are limited). Restart Expo after enabling the notifications plugin in `app.json`.
+
+---
+
+### 8. Accounts & conversation history
+
+**User-facing.** Optional account for saving chats; list/open/delete conversations from Profile.
+
+**Technical path.**
+
+1. Supabase Auth in the app (`src/services/supabase.ts` — anon key only).
+2. Backend verifies JWT and uses the user’s token (or service patterns documented in `auth/`) for row-level access to history tables (`chat_history.sql`).
+3. Routes: `GET/DELETE /api/v1/conversations`, `GET /api/v1/conversations/{id}` (`backend/api/conversations.py`, `services/history.py`).
+4. Chat may attach `conversation_id` so turns append to the same thread when `saved: true`.
+
+---
+
+### 9. Design system & shell
+
+**User-facing.** Light-only cream/green brand (`#7DBA84` / `#F5ECD4` / `#232323`), Inter, shared buttons/cards/sheets.
+
+**Technical path.** Tokens in `src/constants/designTokens.ts`; primitives in `src/components/healthUi.tsx`; icons via `expo-symbols` (`healthIcon.tsx`). Tab shell: `app-tabs.tsx` / `appShell.tsx`. Product/design briefs: `prompts-and-guides/`.
+
+---
+
+### 10. Backend platform concerns
+
+| Concern | Implementation |
+|---------|----------------|
+| Config | `backend/config.py` + `.env` (never commit secrets) |
+| CORS | `ALLOWED_ORIGINS` includes Expo web ports 8081–8083 |
+| Keep-alive | Self-ping `/api/v1/health` on Render so free tier does not sleep |
+| Health | `GET /api/v1/health` reports provider, model, `configured`, `accounts`, `rag` |
+| Docs | OpenAPI at `/docs` |
+
+---
+
+## Malaria modelling (Outlook & Prevention research)
+
+This section summarises the **Neuraxis** prototype documented in the hackathon submission (`Naija Health Bot` PDF / Colab notebook). It is **not** a validated public-health forecasting system yet; it defines what we are wiring into Prevention and a future prediction API. **Outlook charts already use the underlying MAP + POWER yearly series** as observational context.
 
 **Question.** Can we estimate **annual clinical *Plasmodium falciparum* incidence** (cases per **1,000** population) for Nigeria’s **37 administrative areas** (36 states + FCT) by combining **environment** with **historical malaria**?
 
@@ -131,30 +311,29 @@ This section summarises the **Neuraxis** prototype documented in the hackathon s
 - Public-health intervention data as features.
 - Stronger **time-series** and other algorithms; broader validation before operational use.
 
-The **live app** uses **OpenWeather** for “weather now”; the **Outlook / Prevention** product path is to surface **MAP-backed trends** and **model outputs** with these limitations visible in the UI.
-
-**Auth (optional):** Supabase email + password + **TOTP**; saved conversations via REST. Guests can chat without an account.
+The **live app** uses **OpenWeather** for “weather now”; Outlook uses **bundled MAP + POWER history**; Prevention’s model card awaits a packaged prediction endpoint.
 
 ---
 
 ## Repository layout
 
 ```text
-naija-health-bot/          React Native + Expo Router mobile app
+naija-health-bot/          React Native + Expo Router mobile app (SDK 58)
   src/app/                 Screens (tabs + profile / account)
-  src/services/            Assistant API, weather, Supabase client
-  src/components/          Shared UI, weather strip, location picker
-backend/                   FastAPI service (deployed e.g. on Render)
-  api/                     chat, health, conversations, health-reports, jobs
+  src/services/            Weather, location, assistant, reports, push, outlook data
+  src/components/          Shared UI, weather strip, location picker, outlook charts
+  src/data/outlook.json    Bundled MAP + NASA POWER series for Outlook
+  src/hooks/               Auth, environment, prototype session, update push
+  scripts/                 build-outlook-data.py
+backend/                   FastAPI service (e.g. Render)
+  api/                     chat, health, conversations, health-reports, jobs, push-tokens
   guardrails/              Input/output safety
-  services/                RAG retrieval, chat pipeline, reports pipeline
+  services/                RAG, chat, reports pipeline, push notify, scheduler, keep-alive
   knowledge_base/          Approved sources + RAG document corpus
-  supabase/                SQL migrations + rag-embed / rag-query functions
-  scripts/                 load_knowledge, run_daily_updates
-prompts-and-guides/        Product, design, and engineering reference
+  supabase/                SQL (chat, rag, health_reports, push_tokens) + edge functions
+  scripts/                 load_knowledge, run_daily_updates, refresh_feed_writeups
+prompts-and-guides/        Product, design, checklist, engineering reference
 ```
-
-The old workshop `RAG/` folder at the repo root is not part of the production app and can be removed.
 
 ---
 
@@ -167,8 +346,8 @@ Requirements: Node.js compatible with **Expo SDK 58**, npm.
 ```sh
 cd naija-health-bot
 npm ci
-cp .env.example .env    # if present; set keys below
-npx expo start
+cp .env.example .env    # set keys below
+npx expo start          # Expo Go on device, or press w for web
 ```
 
 | Variable | Purpose |
@@ -182,7 +361,7 @@ npx tsc --noEmit
 npx expo lint
 ```
 
-**Outlook charts** use bundled JSON built from `nasa_power_yearly/` at the repo root. After updating those CSVs:
+**Outlook charts** use bundled JSON. After updating NASA POWER / MAP inputs:
 
 ```sh
 cd naija-health-bot
@@ -198,12 +377,12 @@ cd backend
 python -m venv .venv
 .venv\Scripts\activate          # macOS/Linux: source .venv/bin/activate
 pip install -r requirements-dev.txt
-cp .env.example .env            # fill BLUESMINDS_API_KEY, Supabase keys for RAG/accounts
+cp .env.example .env            # BluesMinds, Supabase, UPDATES_JOB_SECRET, CORS
 uvicorn main:app --reload --port 8000
 pytest
 ```
 
-**RAG setup (one-time):** run `supabase/chat_history.sql` and `supabase/rag.sql` in the Supabase SQL editor; deploy `rag-embed` and `rag-query` from `backend/`; then:
+**RAG setup (one-time):** run `supabase/chat_history.sql` and `supabase/rag.sql` in the Supabase SQL editor; deploy `rag-embed` and `rag-query` from `backend/supabase`; then:
 
 ```sh
 .\.venv\Scripts\python.exe -m scripts.load_knowledge
@@ -211,9 +390,9 @@ pytest
 
 Confirm: `GET /api/v1/health` → `"rag": true`, `"accounts": true` when keys are set.
 
-**Daily updates job:** `POST /api/v1/jobs/daily-health-updates` with header `X-Job-Secret` (see `UPDATES_JOB_SECRET` in `.env.example`). List reports: `GET /api/v1/health-reports`.
+**Daily updates job:** `POST /api/v1/jobs/daily-health-updates` with header `X-Job-Secret`. List reports: `GET /api/v1/health-reports`.
 
-**Push alerts:** run `backend/supabase/push_tokens.sql` in Supabase. In the app, Profile → Notifications → **New health updates**. When the daily job inserts reports, the backend sends an Expo push to registered devices.
+**Push alerts:** run `backend/supabase/push_tokens.sql`. In the app, Profile → Notifications → **New health updates**.
 
 Interactive API docs: `http://localhost:8000/docs`.
 
@@ -223,21 +402,24 @@ Interactive API docs: `http://localhost:8000/docs`.
 
 **Shipped in this repo**
 
-- Production-shaped **mobile UI** (streamlined tabs, weather strip, assistant with rotating prompts)
+- Production-shaped **mobile UI** (tabs, weather strip, location flow, outlook charts, updates feed, assistant)
+- **OpenWeather** live conditions + BigDataCloud state resolve
+- **Bundled Outlook** MAP incidence + NASA POWER rainfall visuals
 - **FastAPI** chat with model fallbacks, rate limits, optional **Supabase auth + history**
-- **RAG** corpus (~127 malaria sections), similarity search, load script with retries
-- **Guardrails** (scope, medicines, dosages, urgency hints)
-- **Daily health-updates** backend (scrape → summarise → store)
+- **RAG** corpus, similarity search, load script
+- **Guardrails** (scope, medicines, dosages, urgency / app-referral)
+- **Daily health-updates** pipeline (scrape → summarise → store → optional Expo push)
+- **Push token** register/disable API + Profile toggle
 - **Keep-alive** for free-tier hosting
 
-**Still to wire**
+**Still to wire / improve**
 
-- Package **Colab / research artefacts** (notebook, trained model, MAP + POWER pipelines) into the repo and a **prediction API**
-- **Prevention** daily report: model output + tips from current weather
-- **Outlook** charts: MAP incidence **trends** and model performance context
-- **Updates** tab bound to `GET /api/v1/health-reports`
-- End-to-end **scheduled cron** for the daily job (e.g. Make.com + `X-Job-Secret`)
-- Clinical / content review and **planner-facing** validation before any operational forecast use
+- Package **Colab / research artefacts** (notebook, trained model) into a **prediction API**
+- **Prevention** daily likelihood report driven by that model + live weather
+- Hardening / clinical review of medical copy before wide release
+- External **cron** (e.g. Make.com) if not relying on in-process Lagos scheduler
+- Planner-facing validation before any operational forecast use
+- Prefer **server-proxied** weather keys for production (avoid long-lived keys in the app bundle)
 
 ---
 
@@ -247,6 +429,7 @@ Interactive API docs: `http://localhost:8000/docs`.
 - Backend Supabase: `backend/supabase/README.md`
 - Do **not** commit `.env` files or service-role keys
 - LLM and scraping keys stay on the server only
+- Prefer one owned Expo process in your terminal; avoid parallel agent sessions killing ports 8081–8083 while you are testing on device
 
 ---
 
