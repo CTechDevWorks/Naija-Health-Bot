@@ -13,7 +13,6 @@
 - [ ] Set up NumPy
 - [ ] Set up Scikit-learn
 - [ ] Set up Matplotlib / Seaborn for EDA
-- [ ] Set up Joblib for model serialization
 - [ ] Add XGBoost only if useful and time allows
 - [ ] Create `requirements.txt`
 - [ ] Create reproducible training environment
@@ -239,10 +238,7 @@ Make the ML system understandable to judges.
 
 # 14. 💾 Model Export
 
-- [ ] Save the final trained model
-- [ ] Save the preprocessing pipeline
-- [ ] Use Joblib where appropriate
-- [ ] Create `malariaguard_model.joblib` or the final project model filename
+- [ ] Save the final trained model and preprocessing in the format the team chooses
 - [ ] Create model metadata
 - [ ] Record model version
 - [ ] Record training dataset version
@@ -250,8 +246,9 @@ Make the ML system understandable to judges.
 - [ ] Record target definition
 - [ ] Record evaluation metrics
 - [ ] Record training date
-- [ ] Verify the exported model can be loaded independently
+- [ ] Verify the exported model can be loaded independently on the backend
 - [ ] Test predictions after reloading the model
+- [ ] Confirm all prediction outputs are consumed by the **Prevention** screen (not Outlook)
 
 ---
 
@@ -546,20 +543,23 @@ Create:
 
 ---
 
-# 13. 🔌 Main Outlook API
+# 13. 🔌 Main Prevention API
 
-Create the primary endpoint used by the mobile application.
+Create the primary endpoint that powers the **Prevention** screen.
+
+The trained model’s outputs must enter Prevention only. Outlook stays dataset trends.
 
 The endpoint should:
 
-- [ ] Accept GPS coordinates
-- [ ] Validate coordinates
+- [ ] Accept GPS coordinates (or resolved state)
+- [ ] Validate coordinates / location
 - [ ] Resolve location
 - [ ] Retrieve weather
 - [ ] Prepare ML features
 - [ ] Run ML inference
-- [ ] Generate prevention recommendations
-- [ ] Return structured results
+- [ ] Return incidence estimate, category, period, factors, model version
+- [ ] Generate prevention recommendations from the rules engine
+- [ ] Return structured results for the Prevention UI
 - [ ] Include source information
 - [ ] Include update timestamps
 - [ ] Handle failures gracefully
@@ -640,10 +640,11 @@ Work with the mobile developer to verify:
 - [x] ~~GPS request works~~ (mobile: expo-location + state resolve)
 - [x] ~~Permission denial works~~ (manual state fallback)
 - [x] ~~Manual location fallback works~~
-- [ ] Outlook endpoint works
+- [ ] Outlook dataset trends appear correctly
 - [x] ~~Weather appears correctly~~ (mobile: OpenWeather Current Weather; key in EXPO_PUBLIC_OPENWEATHER_API_KEY)
-- [ ] ML prediction appears correctly
-- [ ] Prevention recommendations appear correctly
+- [ ] Prevention API works
+- [ ] ML prediction appears on Prevention
+- [ ] Prevention recommendations appear on Prevention
 - [ ] Assistant works
 - [ ] Health reports appear correctly
 - [ ] Backend errors are handled correctly

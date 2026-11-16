@@ -602,7 +602,7 @@ Training should be an offline process.
 
 The deployed backend should load the trained model and perform inference.
 
-If using `joblib`, ensure the preprocessing pipeline and model are saved consistently.
+Package the preprocessing pipeline and model together so the backend can load them for Prevention inference.
 
 Document:
 

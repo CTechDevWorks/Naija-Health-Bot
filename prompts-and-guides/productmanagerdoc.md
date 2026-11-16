@@ -529,10 +529,8 @@ Show:
 
 Show:
 
-- Relevant area-level health prediction
-- Risk category where appropriate
-- Prediction period
-- Clear explanation
+- Area trends from datasets (e.g. historical incidence / rainfall)
+- Clear “not personal risk” framing
 
 ### Environment
 
@@ -545,9 +543,14 @@ Show:
 
 ### Prevention
 
-Show:
+Show everything from the trained malaria model:
 
-- A small number of relevant preventive recommendations
+- Area-level likelihood / incidence estimate
+- Risk category where appropriate
+- Prediction period
+- Important factors / short explanation
+- Model-driven prevention tips (rules engine)
+- Clear “not a diagnosis” framing
 
 ### Nigerian Health Update
 
@@ -564,28 +567,35 @@ Provide an obvious way to ask a health question.
 
 ---
 
-# 23. 📊 RISK / OUTLOOK SCREEN
+# 23. 📊 OUTLOOK SCREEN
 
-A deeper screen can explain the prediction.
+Outlook shows **dataset trends** for the user’s area (historical incidence, rainfall, and related charts).
+
+It is **not** where the trained ML prediction is shown.
 
 It may contain:
 
-- Current prediction
-- Historical trend
-- Important factors
-- Environmental context
-- Model limitations
-- Data sources
-- Prediction date
-- Update timestamp
-
-The goal is **explainability**, not simply displaying a mysterious AI score.
+- Historical trend charts
+- Area comparisons
+- Environmental context from datasets
+- Data sources and update timestamps
+- Clear “not personal risk” framing
 
 ---
 
 # 24. 🛡️ PREVENTION SCREEN
 
-The prevention screen provides practical actions.
+Prevention is the home for the **trained malaria model**.
+
+It must show:
+
+- Current area-level prediction (incidence / likelihood)
+- Risk category (if used)
+- Prediction period
+- Important factors / short explanation
+- Model limitations and sources
+- Prediction date / update timestamp
+- Practical tips from the deterministic prevention engine (driven by weather + model category)
 
 It should be:
 
@@ -672,7 +682,6 @@ Avoid unnecessary account/authentication complexity for the MVP unless required.
 - Pandas
 - NumPy
 - Scikit-learn
-- Joblib
 - XGBoost if useful
 
 ### Data

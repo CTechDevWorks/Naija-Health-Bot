@@ -4,7 +4,7 @@
 
 9ja Health helps people understand malaria risk in context, take practical prevention steps, and get **trustworthy answers** from a curated knowledge base — without replacing doctors or guessing personal diagnoses.
 
-**Origins.** The product grew from the **Veritas AI International High School Hackathon (Health track)** — team **Neuraxis** (Olumide-Olaiya Samuel, Coker Oluwatoniloba). The mobile app and backend extend that work into a deployable stack; the malaria **forecasting research** below is the scientific foundation for **Outlook** and **Prevention**.
+**Origins.** The product grew from the **Veritas AI International High School Hackathon (Health track)** — team **Neuraxis** (Olumide-Olaiya Samuel, Coker Oluwatoniloba). The mobile app and backend extend that work into a deployable stack; the malaria **forecasting research** below is the scientific foundation for **Prevention** (Outlook uses the same datasets as trends only).
 
 ---
 
@@ -29,7 +29,7 @@ Malaria still kills more than **600,000 people per year** worldwide, mostly in s
 | Chatbots often diagnose, dose, or wander off-topic | **Server-side guardrails**: malaria-only scope, no dosing, medicine names limited to retrieved text; off-topic and unsafe prompts refused |
 | “Risk” apps imply personal predictions | **Area-level framing only** — population patterns and environment, never “you have malaria” |
 | Weather affects mosquitoes but users do not see the link | **Live local weather** on Home via **OpenWeather**; Outlook rainfall from **NASA POWER** yearly series |
-| Planners / users lack simple incidence foresight | **Outlook** charts from bundled **MAP Trends** + **NASA POWER** data (state/FCT); research Random Forest models documented below for future Prevention/API wiring |
+| Planners / users lack simple incidence foresight | **Outlook** = dataset trends (MAP + NASA POWER). **Prevention** = trained model likelihood + tips when the prediction API is wired |
 | Health news is noisy | **Updates** feed: allowlisted scrape → AI write-up → Supabase → `GET /api/v1/health-reports`; optional **Expo push** when new rows publish |
 | Secrets and keys must not live in the app | **FastAPI backend** holds LLM and Supabase service keys; the Expo app only calls `EXPO_PUBLIC_*` values |
 
@@ -43,7 +43,7 @@ Bottom tabs: **Home · Outlook · Prevention · Assistant · Updates**. **Profil
 |--------|------------------|---------------------------|
 | **Home** | GPS → Nigerian state, live OpenWeather strip (temp, feels-like, humidity, rain, wind, cloud cover), outlook teaser, prevention & updates shortcuts, assistant entry | `EXPO_PUBLIC_OPENWEATHER_API_KEY`; location permission or manual state |
 | **Outlook** | State/FCT **incidence line chart** (MAP) vs Nigeria average, **rainfall bars** (NASA POWER), insight cards, honest “not personal risk” copy | Bundled `src/data/outlook.json` (rebuild via `npm run build:outlook-data`) |
-| **Prevention** | Session checklist by tip group; shows current weather context | **Daily AI / model likelihood report** still placeholder (“Report not ready yet”) |
+| **Prevention** | Home for the **trained malaria model**: likelihood, category, period, factors, and tips | Weather context shown; model report still placeholder until the Prevention API is live |
 | **Assistant** | Live chat to FastAPI; RAG + guardrails; guests OK; signed-in users save history | `EXPO_PUBLIC_API_BASE_URL` + BluesMinds + Supabase RAG |
 | **Updates** | Pull-to-refresh feed of published AI write-ups + official authority directory | Backend + Supabase `health_reports`; optional push tokens SQL |
 | **Profile** | Location, larger text, notifications (push + in-app reminder), privacy/about, explore removed | Push needs physical device + `push_tokens.sql` |
@@ -150,15 +150,15 @@ This section explains **each major feature** as it exists in the repo, including
 
 ---
 
-### 4. Prevention
+### 4. Prevention (trained model home)
 
-**User-facing.** Grouped prevention tips (nets, environment, care-seeking, etc.) with session-only checkboxes. Shows current weather for the area when available. A “MODEL REPORT” card is present but still shows **Report not ready yet**.
+**User-facing.** This tab is where **all trained-model outputs** appear: incidence/likelihood, category, period, factors, and tips from the rules engine. Weather context is shown when available. Until the Prevention API is live, the report card says **Report not ready yet** and the static tip checklist remains as interim guidance.
 
 **Technical path.**
 
-1. Tip content: `preventionGroups` in `src/constants/healthContent.ts`.
-2. Checklist state: `usePrototype` (`completed` / `toggleTask`) — in-memory for the session.
-3. Future wiring: area likelihood from the MAP/NASA-trained model + weather features, served from backend; UI shell is already in `src/app/prevention.tsx`.
+1. UI shell: `src/app/prevention.tsx` (slots for every model field).
+2. Interim tips: `preventionGroups` in `src/constants/healthContent.ts` + session checklist in `usePrototype`.
+3. Future: `POST /api/v1/prevention` returns model estimate + rule-based tips; Outlook does **not** consume ML inference.
 
 ---
 
@@ -266,9 +266,9 @@ App askAssistant()
 
 ---
 
-## Malaria modelling (Outlook & Prevention research)
+## Malaria modelling (Prevention research)
 
-This section summarises the **Neuraxis** prototype documented in the hackathon submission (`Naija Health Bot` PDF / Colab notebook). It is **not** a validated public-health forecasting system yet; it defines what we are wiring into Prevention and a future prediction API. **Outlook charts already use the underlying MAP + POWER yearly series** as observational context.
+This section summarises the **Neuraxis** prototype documented in the hackathon submission (`Naija Health Bot` PDF / Colab notebook). It is **not** a validated public-health forecasting system yet. All trained-model outputs are meant for the **Prevention** screen (via a Prevention API). **Outlook** only visualises the underlying MAP + POWER yearly series as observational trends — it does not run ML inference.
 
 **Question.** Can we estimate **annual clinical *Plasmodium falciparum* incidence** (cases per **1,000** population) for Nigeria’s **37 administrative areas** (36 states + FCT) by combining **environment** with **historical malaria**?
 
@@ -311,7 +311,7 @@ This section summarises the **Neuraxis** prototype documented in the hackathon s
 - Public-health intervention data as features.
 - Stronger **time-series** and other algorithms; broader validation before operational use.
 
-The **live app** uses **OpenWeather** for “weather now”; Outlook uses **bundled MAP + POWER history**; Prevention’s model card awaits a packaged prediction endpoint.
+The **live app** uses **OpenWeather** for “weather now”; Outlook uses **bundled MAP + POWER history**; Prevention awaits the Prevention prediction API (likelihood, category, factors, and rule-based tips).
 
 ---
 
@@ -415,7 +415,7 @@ Interactive API docs: `http://localhost:8000/docs`.
 **Still to wire / improve**
 
 - Package **Colab / research artefacts** (notebook, trained model) into a **prediction API**
-- **Prevention** daily likelihood report driven by that model + live weather
+- **Prevention** API: trained-model likelihood + category + factors + rule-based tips (all model output enters Prevention only)
 - Hardening / clinical review of medical copy before wide release
 - External **cron** (e.g. Make.com) if not relying on in-process Lagos scheduler
 - Planner-facing validation before any operational forecast use

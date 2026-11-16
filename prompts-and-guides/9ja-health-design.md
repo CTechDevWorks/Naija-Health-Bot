@@ -467,8 +467,8 @@ The user opens the app, the app knows (with permission) which Nigerian state/reg
 Bottom-tab navigation (5 tabs max, labels §9.10):
 
 1. **Home** — dashboard (§9.2 / PM §22)
-2. **Outlook** — risk/outlook detail & explanation (§9.4 / PM §23)
-3. **Prevention** — practical actions (§9.5 / PM §24)
+2. **Outlook** — dataset trends for the area (§9.4 / PM §23)
+3. **Prevention** — trained model likelihood + tips (§9.5 / PM §24)
 4. **Assistant** — AI health information chat (§9.6 / PM §17–19, §25)
 5. **Updates** — Nigerian daily health reports (§9.7 / PM §20–21, §26)
 
@@ -476,9 +476,9 @@ Plus: **Settings** (from the header, not a 6th tab — §9.8 / PM §27), **locat
 
 ### 1.3 Product philosophy in one line
 
-> **ML predicts → Weather informs → Rules recommend → RAG explains → Zapier keeps information fresh.** (PM §30)
+> **ML predicts (Prevention) → Weather informs → Rules recommend (Prevention) → Outlook shows dataset trends → RAG explains → Updates keep information fresh.** (PM §30)
 
-Each layer gets its own visual treatment so users can tell *prediction* from *weather* from *advice* from *official report* — never blended into one undifferentiated “AI says” block.
+Each layer gets its own visual treatment so users can tell *prediction* from *weather* from *advice* from *official report* — never blended into one undifferentiated “AI says” block. All trained-model output belongs on **Prevention**.
 
 **Locked characteristics:**
 - 8px spacing base; card-led phone layout (§6)

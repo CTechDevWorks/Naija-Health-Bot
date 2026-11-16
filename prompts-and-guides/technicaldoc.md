@@ -11,7 +11,7 @@ The initial predictive focus is malaria, but the technical architecture must be 
 
 ### Core technical pipeline
 
-**GPS → Location → Climate Data → ML Prediction → Health Intelligence → Prevention Recommendations → AI Explanation → Fresh Health Information**
+**GPS → Location → Climate Data → ML Prediction → Prevention screen (likelihood + tips) · Outlook (dataset trends) · RAG assistant · Fresh health updates**
 
 ---
 
@@ -27,7 +27,6 @@ The initial predictive focus is malaria, but the technical architecture must be 
 | ML | Python + scikit-learn |
 | Data Processing | Pandas + NumPy |
 | ML Models | Random Forest / Gradient Boosting / Ridge |
-| Model Persistence | Joblib |
 | Weather Data | Open-Meteo |
 | Malaria Data | Malaria Atlas Project |
 | Geographic Boundaries | geoBoundaries |
@@ -43,7 +42,6 @@ The initial predictive focus is malaria, but the technical architecture must be 
 | Backend Deployment | Render / Railway / similar |
 | Mobile Distribution | Expo / EAS |
 | Environment Variables | `.env` |
-| Model Format | `.joblib` |
 | Documentation | Markdown |
 | API Documentation | FastAPI OpenAPI / Swagger |
 
@@ -496,19 +494,17 @@ Use:
 
 ---
 
-# 26. Joblib
+# 26. Model packaging
 
-**Technology:** Joblib
-
-Joblib will be used to save the trained ML model and preprocessing pipeline.
+The trained model and preprocessing stay on the **backend**.
 
 Conceptually:
 
-**Training → Pipeline → `.joblib` → FastAPI → Prediction**
+**Training → Pipeline → saved model artefact → FastAPI inference → Prevention API → Prevention screen**
 
-The mobile application should never directly load the `.joblib` model.
+The mobile application must never load the model file directly. It only displays structured results from the Prevention endpoint.
 
-The model remains on the backend.
+All trained-model outputs (incidence estimate, category, period, factors, version) feed the **Prevention** section. Outlook does not consume ML inference.
 
 ---
 
@@ -561,7 +557,7 @@ Pydantic will validate API requests and responses.
 
 Example:
 
-The `/outlook` endpoint should reject:
+The `/prevention` endpoint should reject:
 
 - missing latitude
 - missing longitude
@@ -604,7 +600,7 @@ backend/
 
 - main.py
 - api/
-  - outlook.py
+  - prevention.py
   - chat.py
   - health.py
   - reports.py
@@ -616,9 +612,9 @@ backend/
   - rag_service.py
   - reports_service.py
 - ml/
-  - model.joblib
   - feature_builder.py
   - model_metadata.json
+  - (saved model artefact — format chosen by the ML engineer)
 - data/
   - nigeria_admin1.geojson
 - knowledge_base/
@@ -627,9 +623,9 @@ backend/
 
 # 31. Main API
 
-## POST `/api/v1/outlook`
+## POST `/api/v1/prevention`
 
-Primary application endpoint.
+Primary application endpoint for the trained malaria model.
 
 Input:
 
@@ -638,16 +634,22 @@ Input:
 
 Backend process:
 
-**GPS → State → Weather → Feature Construction → ML → Prevention → Response**
+**GPS → State → Weather → Feature Construction → ML → Prevention rules → Response**
 
-Response contains:
+Response contains (all for the **Prevention** screen):
 
 - location
-- malaria outlook
-- environmental conditions
-- prevention recommendations
+- malaria likelihood / incidence estimate
+- risk category
+- prediction period
+- important factors
+- model version
+- environmental conditions used
+- prevention recommendations (from the rules engine)
 - sources
 - timestamps
+
+Outlook uses bundled dataset trends only and does not call this endpoint.
 
 ---
 
@@ -1374,7 +1376,6 @@ The MVP should deliberately avoid unnecessary complexity.
 - Pandas
 - NumPy
 - scikit-learn
-- Joblib
 - Open-Meteo
 - Malaria Atlas Project
 - geoBoundaries
@@ -1547,7 +1548,7 @@ Open-Meteo
 
 ### ML Service
 
-scikit-learn + Joblib
+scikit-learn → Prevention API
 
 ↓
 
@@ -1557,7 +1558,7 @@ Malaria Atlas Project
 
 ↓
 
-### Health Intelligence
+### Health Intelligence (Prevention screen)
 
 Prediction + Environmental Context
 
