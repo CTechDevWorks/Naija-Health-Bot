@@ -16,6 +16,8 @@ Test from this folder:
 Endpoints
     GET  /api/v1/health → {"status": "ok", "provider": ..., "model": ..., "configured": bool,
                            "accounts": bool}
+    POST /api/v1/prevention → body {"latitude", "longitude", "state"}
+                              area-level malaria incidence estimate + tips
     POST /api/v1/chat   → body {"messages": [{"role": "user" | "assistant", "content": "..."}],
                                 "conversation_id": uuid | null}
                           reply {"response": "...", "model": "...", "guardrail": str | null,
@@ -50,8 +52,9 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from api import chat, conversations, health, push, reports
+from api import chat, conversations, health, prevention, push, reports
 from config import settings
+from ml.malaria_model import load_malaria_model
 from services.daily_scheduler import start_daily_scheduler
 from services.keep_alive import start_keep_alive
 
@@ -60,6 +63,7 @@ logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s: %(messag
 
 @asynccontextmanager
 async def lifespan(_: FastAPI) -> AsyncIterator[None]:
+    load_malaria_model()
     keep_alive = start_keep_alive()
     daily_updates = start_daily_scheduler()
     yield
@@ -86,6 +90,7 @@ app.add_middleware(
 )
 
 app.include_router(health.router)
+app.include_router(prevention.router)
 app.include_router(chat.router)
 app.include_router(conversations.router)
 app.include_router(reports.router)

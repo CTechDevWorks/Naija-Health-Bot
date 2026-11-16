@@ -1,4 +1,5 @@
-import { Pressable, StyleSheet, View } from "react-native";
+import { useEffect, useRef, useState } from "react";
+import { ActivityIndicator, Pressable, StyleSheet, View } from "react-native";
 import {
   AppText,
   Badge,
@@ -13,27 +14,79 @@ import { layout, palette, radius, space } from "@/constants/designTokens";
 import { preventionGroups } from "@/constants/healthContent";
 import { useEnvironment } from "@/hooks/useEnvironment";
 import { usePrototype } from "@/hooks/usePrototype";
+import {
+  fetchPreventionReport,
+  isPreventionConfigured,
+  PreventionApiError,
+  type PreventionReport,
+} from "@/services/preventionApi";
 
 /**
- * Prevention is the only screen that will show trained-model outputs:
+ * Prevention is the only screen that shows trained-model outputs:
  * likelihood, category, period, factors, and rule-based tips.
- * Until the Prevention API is live, slots stay empty / placeholder.
  */
 export default function PreventionScreen() {
   const { completed, toggleTask } = usePrototype();
-  const { state, weather } = useEnvironment();
+  const { state, weather, coords } = useEnvironment();
   const area = state ?? "your area";
 
-  // Wired later from POST /api/v1/prevention — all model fields land here.
-  const modelReport = null as null | {
-    incidencePer1000: number;
-    category: string;
-    period: string;
-    factors: string[];
-    tips: { id: string; title: string; body: string }[];
-    modelVersion: string;
-    updatedAt: string;
-  };
+  const [modelReport, setModelReport] = useState<PreventionReport | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const requestId = useRef(0);
+
+  useEffect(() => {
+    if (!state || !coords) {
+      setModelReport(null);
+      setError(null);
+      setLoading(false);
+      return;
+    }
+    if (!isPreventionConfigured()) {
+      setModelReport(null);
+      setError(
+        "Set EXPO_PUBLIC_API_BASE_URL and restart Expo to load the model report.",
+      );
+      setLoading(false);
+      return;
+    }
+
+    const id = ++requestId.current;
+    const controller = new AbortController();
+    setLoading(true);
+    setError(null);
+
+    void (async () => {
+      try {
+        const report = await fetchPreventionReport({
+          latitude: coords.latitude,
+          longitude: coords.longitude,
+          state,
+          signal: controller.signal,
+        });
+        if (id !== requestId.current) return;
+        setModelReport(report);
+      } catch (err) {
+        if (controller.signal.aborted || id !== requestId.current) return;
+        const message =
+          err instanceof PreventionApiError
+            ? err.message
+            : "The Prevention report could not be loaded.";
+        setModelReport(null);
+        setError(message);
+      } finally {
+        if (id === requestId.current) setLoading(false);
+      }
+    })();
+
+    return () => {
+      controller.abort();
+    };
+  }, [state, coords?.latitude, coords?.longitude]);
+
+  const updatedLabel = modelReport
+    ? new Date(modelReport.updatedAt).toLocaleString()
+    : null;
 
   return (
     <Screen>
@@ -51,7 +104,14 @@ export default function PreventionScreen() {
           <AppText tone="body">Weather appears once location is set.</AppText>
         )}
 
-        {modelReport ? (
+        {loading ? (
+          <View style={ui.smallStack}>
+            <ActivityIndicator color={palette.primary} />
+            <AppText variant="small" tone="body">
+              Estimating area-level incidence for {area}…
+            </AppText>
+          </View>
+        ) : modelReport ? (
           <View style={ui.stack}>
             <View style={ui.smallStack}>
               <AppText variant="label" tone="body">
@@ -62,7 +122,7 @@ export default function PreventionScreen() {
               </AppText>
               <AppText variant="caption" tone="body">
                 Period: {modelReport.period} · Model {modelReport.modelVersion} ·
-                Updated {modelReport.updatedAt}
+                Updated {updatedLabel}
               </AppText>
             </View>
             {modelReport.factors.length > 0 ? (
@@ -71,26 +131,32 @@ export default function PreventionScreen() {
                   Factors in this estimate
                 </AppText>
                 {modelReport.factors.map((factor) => (
-                  <AppText key={factor} tone="body">
-                    · {factor}
+                  <AppText key={factor.label} tone="body">
+                    · {factor.label}: {factor.detail}
                   </AppText>
                 ))}
               </View>
             ) : null}
+            {modelReport.limitations.length > 0 ? (
+              <AppText variant="caption" tone="body">
+                Note: {modelReport.limitations[0]}
+              </AppText>
+            ) : null}
             <AppText variant="caption" tone="body">
-              Area-level estimate only — not your personal chance of illness,
-              and not a diagnosis.
+              {modelReport.disclaimer}
             </AppText>
           </View>
         ) : (
           <View style={ui.smallStack}>
             <AppText variant="subheading" tone="forest">
-              Report not ready yet
+              {state ? "Report not ready yet" : "Choose a location first"}
             </AppText>
             <AppText variant="small" tone="body">
-              When the Prevention API is connected, this card shows the model’s
-              incidence estimate, category, period, factors, and tips for{" "}
-              {area}.
+              {error
+                ? error
+                : state
+                  ? `When the Prevention API is connected, this card shows the model’s incidence estimate, category, period, factors, and tips for ${area}.`
+                  : "Allow location or pick a Nigerian state on Home, then return here for the model report."}
             </AppText>
           </View>
         )}
@@ -100,6 +166,9 @@ export default function PreventionScreen() {
       {modelReport?.tips?.length ? (
         modelReport.tips.map((item) => (
           <Card key={item.id}>
+            <AppText variant="caption" tone="body">
+              {item.group}
+            </AppText>
             <AppText variant="subheading">{item.title}</AppText>
             <AppText variant="small" tone="body">
               {item.body}

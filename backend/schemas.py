@@ -130,3 +130,46 @@ class PushTokenRequest(BaseModel):
 class PushTokenResponse(BaseModel):
     ok: bool = True
     enabled: bool
+
+
+class PreventionRequest(BaseModel):
+    """GPS + already-resolved Nigerian state from the mobile app."""
+
+    latitude: float = Field(ge=-90, le=90)
+    longitude: float = Field(ge=-180, le=180)
+    state: str = Field(min_length=2, max_length=64)
+
+
+class PreventionFactor(BaseModel):
+    label: str
+    detail: str
+
+
+class PreventionTipItem(BaseModel):
+    id: str
+    title: str
+    body: str
+    group: str
+
+
+class PreventionSource(BaseModel):
+    id: str
+    title: str
+    organisation: str
+    url: str
+
+
+class PreventionResponse(BaseModel):
+    state: str
+    incidence_per_1000: float
+    category: str
+    period: str
+    prediction_year: int
+    feature_year: int
+    factors: list[PreventionFactor]
+    tips: list[PreventionTipItem]
+    model_version: str
+    updated_at: str
+    sources: list[PreventionSource] = Field(default_factory=list)
+    limitations: list[str] = Field(default_factory=list)
+    disclaimer: str

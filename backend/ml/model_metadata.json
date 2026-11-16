@@ -1,0 +1,123 @@
+{
+  "model_version": "gb-change-v1",
+  "model_type": "GradientBoostingRegressor",
+  "target": "incidence_change",
+  "reconstruction": "previous_incidence + predicted_change",
+  "prediction_units": "Cases per Thousand",
+  "features": [
+    "Name",
+    "temperature",
+    "rainfall",
+    "humidity",
+    "wind_speed",
+    "previous_incidence"
+  ],
+  "feature_units": {
+    "temperature": "mean C (previous calendar year, NASA POWER)",
+    "rainfall": "total mm (previous calendar year, NASA POWER)",
+    "humidity": "mean percent (previous calendar year, NASA POWER)",
+    "wind_speed": "mean m/s (previous calendar year, NASA POWER)",
+    "previous_incidence": "Cases per Thousand (previous year, MAP)",
+    "Name": "Nigerian state / FCT (dataset spelling)"
+  },
+  "hyperparameters": {
+    "n_estimators": 150,
+    "learning_rate": 0.03,
+    "max_depth": 2,
+    "random_state": 42
+  },
+  "training_dataset": "nasa_power_yearly/experiment_data.csv",
+  "training_rows": 925,
+  "training_years": {
+    "min": 2001,
+    "max": 2025
+  },
+  "holdout_split": {
+    "train_through": 2020,
+    "test_years": [
+      2021,
+      2022,
+      2023,
+      2024,
+      2025
+    ]
+  },
+  "published_holdout_metrics": {
+    "Average Baseline": {
+      "MAE": 99.756,
+      "RMSE": 110.416,
+      "R2": -1.708
+    },
+    "Previous-Year Baseline": {
+      "MAE": 19.245,
+      "RMSE": 25.442,
+      "R2": 0.856
+    },
+    "Model 1: State + Weather": {
+      "MAE": 79.815,
+      "RMSE": 98.085,
+      "R2": -1.137
+    },
+    "Model 2: State + Weather + Previous Incidence": {
+      "MAE": 20.725,
+      "RMSE": 26.863,
+      "R2": 0.84
+    },
+    "Model 3: Ridge": {
+      "MAE": 22.513,
+      "RMSE": 30.653,
+      "R2": 0.791
+    },
+    "Model 4: Gradient Boosting": {
+      "MAE": 20.258,
+      "RMSE": 26.092,
+      "R2": 0.84
+    }
+  },
+  "recomputed_holdout_metrics": {
+    "Previous-Year Baseline": {
+      "MAE": 19.245,
+      "RMSE": 25.442,
+      "R2": 0.856
+    },
+    "Model 4: Gradient Boosting": {
+      "MAE": 20.258,
+      "RMSE": 26.092,
+      "R2": 0.849
+    },
+    "Average Baseline": {
+      "MAE": 99.756,
+      "RMSE": 110.416,
+      "R2": -1.708
+    }
+  },
+  "category_cutoffs": {
+    "q25": 269.833,
+    "q50": 344.463,
+    "q75": 443.527
+  },
+  "category_note": "Low / Moderate / Elevated / High are quartiles of training incidence. They are model bands, not clinical thresholds.",
+  "limitations": [
+    "State/FCT resolution only \u2014 not LGA, neighbourhood, or individual risk.",
+    "One climate point per state; annual averages hide seasonal patterns.",
+    "No ITN coverage, case management, spraying, or healthcare-access features.",
+    "Gradient boosting is the best of the four trained models but still does not beat the previous-year incidence baseline on 2021\u20132025.",
+    "Prototype for educational / hackathon demonstration \u2014 not medical advice."
+  ],
+  "sources": [
+    {
+      "id": "map-trends",
+      "title": "Malaria Atlas Project Trends",
+      "organisation": "Malaria Atlas Project",
+      "url": "https://malariaatlas.org/"
+    },
+    {
+      "id": "nasa-power",
+      "title": "NASA POWER meteorological data",
+      "organisation": "NASA",
+      "url": "https://power.larc.nasa.gov/"
+    }
+  ],
+  "trained_at": "2026-11-16T03:43:40.217087+00:00",
+  "served_model": "Model 4: Gradient Boosting"
+}

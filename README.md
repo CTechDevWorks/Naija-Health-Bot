@@ -29,7 +29,7 @@ Malaria still kills more than **600,000 people per year** worldwide, mostly in s
 | Chatbots often diagnose, dose, or wander off-topic | **Server-side guardrails**: malaria-only scope, no dosing, medicine names limited to retrieved text; off-topic and unsafe prompts refused |
 | “Risk” apps imply personal predictions | **Area-level framing only** — population patterns and environment, never “you have malaria” |
 | Weather affects mosquitoes but users do not see the link | **Live local weather** on Home via **OpenWeather**; Outlook rainfall from **NASA POWER** yearly series |
-| Planners / users lack simple incidence foresight | **Outlook** = dataset trends (MAP + NASA POWER). **Prevention** = trained model likelihood + tips when the prediction API is wired |
+| Planners / users lack simple incidence foresight | **Outlook** = dataset trends (MAP + NASA POWER). **Prevention** = trained gradient-boosting estimate + rule-based tips via `POST /api/v1/prevention` |
 | Health news is noisy | **Updates** feed: allowlisted scrape → AI write-up → Supabase → `GET /api/v1/health-reports`; optional **Expo push** when new rows publish |
 | Secrets and keys must not live in the app | **FastAPI backend** holds LLM and Supabase service keys; the Expo app only calls `EXPO_PUBLIC_*` values |
 
@@ -43,7 +43,7 @@ Bottom tabs: **Home · Outlook · Prevention · Assistant · Updates**. **Profil
 |--------|------------------|---------------------------|
 | **Home** | GPS → Nigerian state, live OpenWeather strip (temp, feels-like, humidity, rain, wind, cloud cover), outlook teaser, prevention & updates shortcuts, assistant entry | `EXPO_PUBLIC_OPENWEATHER_API_KEY`; location permission or manual state |
 | **Outlook** | State/FCT **incidence line chart** (MAP) vs Nigeria average, **rainfall bars** (NASA POWER), insight cards, honest “not personal risk” copy | Bundled `src/data/outlook.json` (rebuild via `npm run build:outlook-data`) |
-| **Prevention** | Home for the **trained malaria model**: likelihood, category, period, factors, and tips | Weather context shown; model report still placeholder until the Prevention API is live |
+| **Prevention** | Trained **gradient boosting** report: incidence, category, period, factors, rule-based tips | `EXPO_PUBLIC_API_BASE_URL`; backend loads `backend/ml/model.joblib` |
 | **Assistant** | Live chat to FastAPI; RAG + guardrails; guests OK; signed-in users save history | `EXPO_PUBLIC_API_BASE_URL` + BluesMinds + Supabase RAG |
 | **Updates** | Pull-to-refresh feed of published AI write-ups + official authority directory | Backend + Supabase `health_reports`; optional push tokens SQL |
 | **Profile** | Location, larger text, notifications (push + in-app reminder), privacy/about, explore removed | Push needs physical device + `push_tokens.sql` |
@@ -80,11 +80,11 @@ flowchart LR
   subgraph research["Malaria ML (hackathon research)"]
     MAP[Malaria Atlas Project Trends]
     NASA[NASA POWER weather]
-    MAP --> ML[Random Forest regressors]
+    MAP --> ML[Gradient boosting change model]
     NASA --> ML
   end
 
-  ML -.-> UI
+  ML --> API
 ```
 
 **Knowledge base:** Markdown sections under `backend/knowledge_base/RAGInfo/documents/`, loaded with `python -m scripts.load_knowledge`. SQL and edge functions: `backend/supabase/README.md`.
@@ -152,13 +152,13 @@ This section explains **each major feature** as it exists in the repo, including
 
 ### 4. Prevention (trained model home)
 
-**User-facing.** This tab is where **all trained-model outputs** appear: incidence/likelihood, category, period, factors, and tips from the rules engine. Weather context is shown when available. Until the Prevention API is live, the report card says **Report not ready yet** and the static tip checklist remains as interim guidance.
+**User-facing.** This tab is where **all trained-model outputs** appear: incidence/likelihood, category, period, factors, and tips from the rules engine. Weather context is shown when available. When the API is reachable, the report card fills from the gradient-boosting model; if the call fails, the static tip checklist remains as fallback guidance.
 
 **Technical path.**
 
-1. UI shell: `src/app/prevention.tsx` (slots for every model field).
-2. Interim tips: `preventionGroups` in `src/constants/healthContent.ts` + session checklist in `usePrototype`.
-3. Future: `POST /api/v1/prevention` returns model estimate + rule-based tips; Outlook does **not** consume ML inference.
+1. UI: `src/app/prevention.tsx` + `src/services/preventionApi.ts`.
+2. `POST /api/v1/prevention` with `{ latitude, longitude, state }` → feature builder (previous-year NASA POWER + MAP) → gradient boosting change model → incidence reconstruction → quartile category → deterministic tips (`backend/services/prevention_rules.py`).
+3. Outlook does **not** consume ML inference.
 
 ---
 
@@ -268,50 +268,70 @@ App askAssistant()
 
 ## Malaria modelling (Prevention research)
 
-This section summarises the **Neuraxis** prototype documented in the hackathon submission (`Naija Health Bot` PDF / Colab notebook). It is **not** a validated public-health forecasting system yet. All trained-model outputs are meant for the **Prevention** screen (via a Prevention API). **Outlook** only visualises the underlying MAP + POWER yearly series as observational trends — it does not run ML inference.
+Team **Neuraxis** (Olumide-Olaiya Samuel, Coker Oluwatoniloba) — Veritas AI International High School Hackathon, Health track. **Disclaimer:** this is a prototype for educational and hackathon demonstration purposes and does **not** constitute formal medical or public-health advice. It is **not** a validated forecasting system for operational planning.
 
-**Question.** Can we estimate **annual clinical *Plasmodium falciparum* incidence** (cases per **1,000** population) for Nigeria’s **37 administrative areas** (36 states + FCT) by combining **environment** with **historical malaria**?
+All trained-model outputs feed the **Prevention** screen via `POST /api/v1/prevention`. **Outlook** only visualises the underlying MAP + POWER yearly series as observational trends — it does not run ML inference.
 
-**Data.**
+### The problem
 
-| Source | Role |
-|--------|------|
-| [MAP Trends](https://malariaatlas.org/) | **962** state-level incidence records, **2000–2025** |
-| [NASA POWER](https://power.larc.nasa.gov/) | Daily temperature, rainfall, humidity, wind — aggregated to **annual** values per state, paired with the **following year’s** incidence |
+Malaria remains a major public-health challenge across Nigeria’s **36 states and the FCT**. Planners and clinics need foresight into **annual incidence** trends to allocate mosquito-control resources, treatment supplies, and education. Anticipating change is hard because transmission depends on interacting factors — environment, historical transmission, and public-health interventions.
 
-**Models (scikit-learn Random Forest).**
+### What we built
 
-- **Model 1:** state identity + previous-year weather.
-- **Model 2:** Model 1 + **previous-year incidence** in the same state.
+A machine-learning prototype that estimates **annual clinical *Plasmodium falciparum* incidence** (cases per **1,000** population) for Nigeria’s **37** administrative areas. The work asks whether combining **environmental information** with **historical malaria incidence** improves predictions versus environment alone. Intended use: data-informed estimates that could support planning and awareness. Resolution is **state/FCT only** — not individual or neighbourhood risk.
 
-**Evaluation (chronological, no leakage):** train **2001–2015**, validate **2016–2020**, hold-out test **2021–2025**. Compared with an **average** baseline and a **previous-year** baseline (MAE, RMSE, R²).
+### How it works
 
-**Hold-out test results (2021–2025):**
+**Data.** We combined **962** state-level incidence records from [MAP Trends](https://malariaatlas.org/) (**2000–2025**) with daily [NASA POWER](https://power.larc.nasa.gov/) weather for 37 areas. Temperature, rainfall, humidity, and wind were aggregated to **annual** values and paired with the **following year’s** incidence.
+
+**Models (scikit-learn).**
+
+- **Model 1** — Random Forest: state identity + previous-year weather.
+- **Model 2** — Random Forest: Model 1 + previous-year incidence in the same state.
+- **Model 3** — Ridge and **Model 4** — Gradient Boosting: predict the **change** in incidence, then add it to the previous year (`previous_incidence + predicted_change`) rather than estimating the level from scratch.
+
+**Evaluation.** Chronological split with no leakage: train **2001–2015**, validate **2016–2020**, hold-out test **2021–2025**. Compared with an **average** baseline and a **previous-year** baseline (MAE, RMSE, R²).
+
+### Results and performance (hold-out 2021–2025)
 
 | Approach | MAE | RMSE | R² |
 |----------|-----|------|-----|
 | Average baseline | 99.756 | 110.416 | −1.708 |
 | Previous-year baseline | **19.245** | **25.442** | **0.856** |
 | Model 1: state + weather | 79.815 | 98.085 | −1.137 |
-| Model 2: state + weather + prior incidence | 20.725 | 26.863 | 0.840 |
+| Model 2: state + weather + previous incidence | 20.725 | 26.863 | 0.840 |
+| Model 3: Ridge (change) | 22.513 | 30.653 | 0.791 |
+| **Model 4: Gradient Boosting (change)** — **served in app** | **20.258** | **26.092** | **0.84** |
 
-**What we learned.** Prior-year incidence is highly informative; adding it to a forest model nears the simple **previous-year baseline** but **does not beat it** on the final test set. With this setup, **annual weather features alone did not show a clear extra edge** over history — an important honest result for product copy and for the next modelling iteration.
+**Finding.** Adding previous-year malaria incidence dramatically improved the Random Forest, but it still performed slightly worse than simply carrying last year’s incidence forward. Gradient boosting and Ridge showed no major breakthrough beyond that. **Gradient boosting is the best of the four models** and is what the app serves — and it **still cannot pass the previous-year baseline**. With this setup, annual environmental features provided no demonstrated extra predictive advantage over history.
 
-**Known limits (stated in the submission).**
+### Where it fails
 
-- **State/FCT resolution only** — no LGA, neighbourhood, or outbreak hotspots.
-- **One climate point per state**; **annual** averages hide **seasonal** transmission patterns.
-- No covariates yet for **ITN coverage**, **case management**, spraying, or healthcare access.
+- **State/FCT only** — cannot identify localised outbreaks or within-state community differences.
+- Model 1 struggles without historical malaria; none of the four models beat the previous-year baseline.
+- Climate is **one point per state**; **annual** averages hide **seasonal** patterns.
+- No covariates yet for healthcare access, mosquito-control interventions, ITN coverage, or case management.
 - **Not** individual risk; **not** for diagnosis or treatment decisions.
 
-**Modelling roadmap (from the submission).**
+### What we’d do next
 
 - Monthly / **LGA-level** surveillance where available.
-- **Seasonal** rainfall and temperature features, not yearly means only.
-- Public-health intervention data as features.
-- Stronger **time-series** and other algorithms; broader validation before operational use.
+- **Seasonal** rainfall and temperature features instead of yearly means only.
+- Public-health intervention data (nets, access, prevention programmes).
+- Alternative regression and time-series algorithms.
+- Broader validation across places and periods before any real-world deployment.
 
-The **live app** uses **OpenWeather** for “weather now”; Outlook uses **bundled MAP + POWER history**; Prevention awaits the Prevention prediction API (likelihood, category, factors, and rule-based tips).
+### Sources and technologies
+
+- **Data:** MAP Trends (state-level incidence, 2000–2025); NASA POWER API (daily meteorology).
+- **Stack:** Python, pandas, NumPy, scikit-learn; Colab / Drive for the research notebook.
+- **AI assistance:** ChatGPT and Gemini helped with programming, debugging, and understanding parts of the workflow. The team reviewed and tested the code and evaluated the models.
+
+### In the live app
+
+- **OpenWeather** powers “weather now” on Home / Prevention context (not model input).
+- **Outlook** uses bundled MAP + POWER history charts.
+- **Prevention** calls `POST /api/v1/prevention` with GPS + resolved state. The backend builds previous-year NASA POWER + MAP features, runs the packaged **gradient boosting** change model, reconstructs incidence, assigns a quartile **category** (model band, not clinical), and returns deterministic prevention tips. Artefacts: `backend/ml/model.joblib`, `backend/ml/model_metadata.json` (retrain with `python -m scripts.train_prevention_model` from `backend/`).
 
 ---
 
@@ -326,12 +346,14 @@ naija-health-bot/          React Native + Expo Router mobile app (SDK 58)
   src/hooks/               Auth, environment, prototype session, update push
   scripts/                 build-outlook-data.py
 backend/                   FastAPI service (e.g. Render)
-  api/                     chat, health, conversations, health-reports, jobs, push-tokens
+  api/                     chat, prevention, health, conversations, health-reports, jobs, push-tokens
+  ml/                      Packaged gradient boosting model + metadata + feature builder
   guardrails/              Input/output safety
-  services/                RAG, chat, reports pipeline, push notify, scheduler, keep-alive
+  services/                RAG, chat, prevention, reports pipeline, push notify, scheduler, keep-alive
   knowledge_base/          Approved sources + RAG document corpus
   supabase/                SQL (chat, rag, health_reports, push_tokens) + edge functions
-  scripts/                 load_knowledge, run_daily_updates, refresh_feed_writeups
+  scripts/                 load_knowledge, train_prevention_model, run_daily_updates, refresh_feed_writeups
+nasa_power_yearly/         MAP incidence + NASA POWER yearly CSVs (Outlook + Prevention features)
 prompts-and-guides/        Product, design, checklist, engineering reference
 ```
 
