@@ -27,6 +27,7 @@ Endpoints
     DELETE /api/v1/conversations       → delete all of them
     GET  /api/v1/health-reports        → published official health updates
     POST /api/v1/jobs/daily-health-updates → scrape → AI summarise → Supabase
+    POST /api/v1/push-tokens           → register / disable Expo push tokens
     GET  /docs          → interactive API docs
 
 Sign-in is optional. Without a token the chat works and nothing is saved. Saved
@@ -49,7 +50,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from api import chat, conversations, health, reports
+from api import chat, conversations, health, push, reports
 from config import settings
 from services.daily_scheduler import start_daily_scheduler
 from services.keep_alive import start_keep_alive
@@ -88,6 +89,7 @@ app.include_router(health.router)
 app.include_router(chat.router)
 app.include_router(conversations.router)
 app.include_router(reports.router)
+app.include_router(push.router)
 
 
 @app.get("/", include_in_schema=False)

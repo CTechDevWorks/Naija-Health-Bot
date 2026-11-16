@@ -22,6 +22,7 @@ import { SavedConversations } from "@/components/savedConversations";
 import { useAuth } from "@/hooks/useAuth";
 import { useEnvironment } from "@/hooks/useEnvironment";
 import { usePrototype } from "@/hooks/usePrototype";
+import { useUpdatePush } from "@/hooks/useUpdatePush";
 
 type Panel =
   "history" | "privacy" | "support" | "about" | "notifications" | null;
@@ -41,6 +42,12 @@ export default function ProfileScreen() {
     setReminders,
     clearChat,
   } = usePrototype();
+  const {
+    enabled: updateAlerts,
+    busy: updateAlertsBusy,
+    error: updateAlertsError,
+    setUpdateAlerts,
+  } = useUpdatePush();
   const { state, source } = useEnvironment();
   const { status, email } = useAuth();
   const signedIn = status === "ready";
@@ -50,11 +57,7 @@ export default function ProfileScreen() {
   const questions = messages.filter((message) => message.role === "user");
   return (
     <>
-      <Screen
-        title="A space for you."
-        subtitle="Your preferences. Your peace of mind."
-        back
-      >
+      <Screen back>
         <Card style={styles.profileCard}>
           <View style={styles.avatar}>
             {signedIn && email ? (
@@ -157,15 +160,18 @@ export default function ProfileScreen() {
               icon="bell"
               title="Notifications & reminders"
               subtitle={
-                reminders
-                  ? "In-app reminder enabled"
-                  : "No push notifications enabled"
+                updateAlerts
+                  ? "New health-update alerts on"
+                  : reminders
+                    ? "In-app prevention reminder on"
+                    : "Alerts off"
               }
               onPress={() => setPanel("notifications")}
             />
           </Card>
           <AppText variant="caption" tone="body">
-            Preferences apply for this session only and reset on reload.
+            Health-update alerts stay on across launches. Other preferences are
+            session-only.
           </AppText>
         </View>
         <View style={ui.smallStack}>
@@ -315,11 +321,31 @@ export default function ProfileScreen() {
               A gentle nudge, on your terms.
             </AppText>
             <AppText tone="body">
-              Push notifications and scheduled alerts are not implemented. This
-              switch only shows a prevention reminder card on Home for the
-              current session.
+              Turn on health-update alerts to be notified when a new official
+              report is published. You can also keep a prevention reminder card
+              on Home for this session.
             </AppText>
             <Card>
+              <RowLink
+                icon="news"
+                title="New health updates"
+                subtitle={
+                  updateAlertsBusy
+                    ? "Updating…"
+                    : "Push when a report is published"
+                }
+                trailing={
+                  <Switch
+                    accessibilityLabel="New health update notifications"
+                    value={updateAlerts}
+                    disabled={updateAlertsBusy}
+                    onValueChange={(value) => void setUpdateAlerts(value)}
+                    trackColor={{ false: palette.line, true: palette.primary }}
+                    thumbColor={palette.white}
+                  />
+                }
+              />
+              <View style={ui.separator} />
               <RowLink
                 icon="bell"
                 title="In-app prevention reminder"
@@ -335,6 +361,11 @@ export default function ProfileScreen() {
                 }
               />
             </Card>
+            {updateAlertsError ? (
+              <AppText variant="small" tone="body">
+                {updateAlertsError}
+              </AppText>
+            ) : null}
             <Button
               secondary
               onPress={() => {
@@ -382,7 +413,7 @@ export default function ProfileScreen() {
             <AppText tone="body">
               This frontend uses React Native, Expo SDK 58 and Expo Router. The
               assistant runs on a FastAPI service. ML predictions, live weather,
-              live reports and push notifications are not connected.
+              and optional push alerts when a new report is published.
             </AppText>
             <SourceLink
               title="Educational source · World Health Organization"

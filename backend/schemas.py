@@ -119,3 +119,14 @@ class DailyUpdatesJobResponse(BaseModel):
     items_inserted: int
     items_skipped: int
     error_message: str | None = None
+
+
+class PushTokenRequest(BaseModel):
+    token: str = Field(min_length=20, max_length=200)
+    platform: Literal["ios", "android", "web", "unknown"] | None = None
+    enabled: bool = True
+
+
+class PushTokenResponse(BaseModel):
+    ok: bool = True
+    enabled: bool

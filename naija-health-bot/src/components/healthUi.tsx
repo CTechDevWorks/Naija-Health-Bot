@@ -139,6 +139,34 @@ export function Badge({
     </View>
   );
 }
+export function AppBrandHeader() {
+  return (
+    <View style={ui.brandHeader}>
+      <View>
+        <AppText variant="heading" tone="forest">
+          9ja Health
+          <AppText variant="heading" tone="forest">
+            .
+          </AppText>
+        </AppText>
+        <AppText variant="eyebrow" tone="body">
+          WELLNESS, CLOSER TO HOME
+        </AppText>
+      </View>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel="Open profile and preferences"
+        onPress={() => router.push("/profile")}
+        style={ui.brandAvatar}
+      >
+        <AppText variant="subheading" tone="forest">
+          •
+        </AppText>
+      </Pressable>
+    </View>
+  );
+}
+
 export function SectionHeading({
   title,
   action,
@@ -176,6 +204,7 @@ export function Screen({
   backTo = "/",
   trailing,
   refreshControl,
+  brandHeader = true,
 }: PropsWithChildren<{
   title?: string;
   subtitle?: string;
@@ -184,6 +213,8 @@ export function Screen({
   backTo?: Href;
   trailing?: ReactNode;
   refreshControl?: ReactElement<typeof RefreshControl>;
+  /** Shared 9ja Health header; off only for rare full-bleed layouts. */
+  brandHeader?: boolean;
 }>) {
   return (
     <ScrollView
@@ -193,28 +224,43 @@ export function Screen({
       keyboardShouldPersistTaps="handled"
       refreshControl={refreshControl}
     >
-      {title && (
+      {brandHeader ? <AppBrandHeader /> : null}
+      {back ? (
         <View style={ui.pageHeader}>
-          {back && (
-            <IconButton
-              icon="back"
-              label={backTo === "/" ? "Back to Home" : "Back"}
-              onPress={() => router.replace(backTo)}
-            />
-          )}
+          <IconButton
+            icon="back"
+            label={backTo === "/" ? "Back to Home" : "Back"}
+            onPress={() => router.replace(backTo)}
+          />
+          {title ? (
+            <View style={ui.flex}>
+              <AppText variant="title" tone="forest">
+                {title}
+              </AppText>
+              {subtitle ? (
+                <AppText variant="small" tone="body">
+                  {subtitle}
+                </AppText>
+              ) : null}
+            </View>
+          ) : null}
+          {trailing}
+        </View>
+      ) : title ? (
+        <View style={ui.pageHeader}>
           <View style={ui.flex}>
             <AppText variant="title" tone="forest">
               {title}
             </AppText>
-            {subtitle && (
+            {subtitle ? (
               <AppText variant="small" tone="body">
                 {subtitle}
               </AppText>
-            )}
+            ) : null}
           </View>
           {trailing}
         </View>
-      )}
+      ) : null}
       {children}
     </ScrollView>
   );
@@ -440,6 +486,22 @@ export const ui = StyleSheet.create({
     paddingTop: space.xl,
     paddingBottom: space.xxl,
     gap: space.xl,
+  },
+  brandHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingBottom: space.lg,
+    borderBottomWidth: layout.line,
+    borderColor: palette.line,
+  },
+  brandAvatar: {
+    width: layout.avatar,
+    height: layout.avatar,
+    borderRadius: radius.pill,
+    backgroundColor: palette.cream,
+    alignItems: "center",
+    justifyContent: "center",
   },
   pageHeader: {
     flexDirection: "row",

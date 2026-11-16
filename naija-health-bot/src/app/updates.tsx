@@ -21,29 +21,6 @@ import {
 
 const FEED_LIMIT = 5;
 
-const authorities = [
-  {
-    title: "Nigeria Centre for Disease Control and Prevention",
-    tag: "Public health",
-    url: "https://ncdc.gov.ng/",
-    description:
-      "Official disease surveillance, public-health guidance and situation reports.",
-  },
-  {
-    title: "Federal Ministry of Health and Social Welfare",
-    tag: "National health",
-    url: "https://health.gov.ng/",
-    description:
-      "National health information and policy from the federal ministry.",
-  },
-  {
-    title: "National Primary Health Care Development Agency",
-    tag: "Primary care",
-    url: "https://nphcda.gov.ng/",
-    description: "Official information on primary healthcare and immunisation.",
-  },
-];
-
 function WriteUp({ text }: { text: string }) {
   const paragraphs = text
     .split(/\n\s*\n/)
@@ -100,8 +77,6 @@ export default function UpdatesScreen() {
 
   return (
     <Screen
-      title="Informed, not overwhelmed."
-      subtitle="Five daily write-ups from official health sources."
       refreshControl={
         <RefreshControl
           refreshing={refreshing}
@@ -126,7 +101,7 @@ export default function UpdatesScreen() {
           </AppText>
           <AppText tone="body">{error}</AppText>
           <AppText variant="caption" tone="body">
-            Pull to refresh, or use the official directory below.
+            Pull to refresh and try again.
           </AppText>
         </Card>
       ) : null}
@@ -139,8 +114,8 @@ export default function UpdatesScreen() {
             Today’s briefing isn’t ready
           </AppText>
           <AppText tone="body">
-            Fresh write-ups appear after the 7:00 AM Africa/Lagos run. Meanwhile,
-            explore official Nigerian health authorities below.
+            Fresh write-ups appear after the 7:00 AM Africa/Lagos run. Pull to
+            refresh in a moment.
           </AppText>
         </Card>
       ) : null}
@@ -167,22 +142,6 @@ export default function UpdatesScreen() {
           </Card>
         ))}
 
-      <AppText variant="heading" tone="forest">
-        Official directory
-      </AppText>
-      <AppText tone="body">
-        Named authorities you can always check directly.
-      </AppText>
-      {authorities.map((authority) => (
-        <Card key={authority.url} soft>
-          <Badge>{authority.tag}</Badge>
-          <AppText variant="heading" tone="forest">
-            {authority.title}
-          </AppText>
-          <AppText tone="body">{authority.description}</AppText>
-          <SourceLink title="Open official site" url={authority.url} />
-        </Card>
-      ))}
       <Disclaimer />
     </Screen>
   );

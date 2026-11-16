@@ -15,37 +15,10 @@ import { HealthIcon } from "@/components/healthIcon";
 import { layout, palette, radius, space } from "@/constants/designTokens";
 import { Enrolment, MIN_PASSWORD_LENGTH, useAuth } from "@/hooks/useAuth";
 
-const headings = {
-  disabled: {
-    title: "Accounts",
-    subtitle: "Not switched on in this build.",
-  },
-  loading: { title: "Your account", subtitle: "One moment…" },
-  guest: {
-    title: "Your account",
-    subtitle: "Optional. Sign in to keep your conversations.",
-  },
-  enrol: {
-    title: "Add your authenticator",
-    subtitle: "One more step to protect your account.",
-  },
-  challenge: {
-    title: "Enter your code",
-    subtitle: "From your authenticator app.",
-  },
-  ready: { title: "Your account", subtitle: "Signed in with two factors." },
-};
-
 export default function AccountScreen() {
   const { status } = useAuth();
-  const heading = headings[status];
   return (
-    <Screen
-      title={heading.title}
-      subtitle={heading.subtitle}
-      back
-      backTo="/profile"
-    >
+    <Screen back backTo="/profile">
       {status === "disabled" && <NotSetUp />}
       {status === "loading" && <ActivityIndicator color={palette.forest} />}
       {status === "guest" && <SignInOrCreate />}

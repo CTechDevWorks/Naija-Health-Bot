@@ -7,6 +7,7 @@ SQL files, run in the Supabase SQL Editor:
 | `chat_history.sql` | Saved conversations (accounts + two-factor) |
 | `rag.sql` | Malaria knowledge tables + similarity search |
 | `health_reports.sql` | Daily Updates feed (`update_sources`, `health_reports`, job log) |
+| `push_tokens.sql` | Expo push tokens for “new health update” alerts |
 
 ## RAG edge functions
 

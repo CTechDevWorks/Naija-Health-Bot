@@ -101,7 +101,15 @@ class Settings:
     allowed_origins: list[str] = field(
         default_factory=lambda: _csv(
             os.getenv("ALLOWED_ORIGINS"),
-            ["http://localhost:8081", "http://127.0.0.1:8081"],
+            [
+                # Expo web often hops ports when 8081 is busy.
+                "http://localhost:8081",
+                "http://127.0.0.1:8081",
+                "http://localhost:8082",
+                "http://127.0.0.1:8082",
+                "http://localhost:8083",
+                "http://127.0.0.1:8083",
+            ],
         )
     )
 

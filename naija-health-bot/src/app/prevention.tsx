@@ -20,7 +20,7 @@ export default function PreventionScreen() {
   const area = state ?? "your area";
 
   return (
-    <Screen title="Prevention" subtitle="Likelihood report and tips">
+    <Screen>
       <Card soft>
         <Badge>MODEL REPORT</Badge>
         <AppText variant="heading" tone="forest">

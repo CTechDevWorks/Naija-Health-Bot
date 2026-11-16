@@ -28,29 +28,6 @@ export default function HomeScreen() {
   return (
     <>
       <Screen>
-        <View style={styles.brandRow}>
-          <View>
-            <AppText variant="heading" tone="forest">
-              9ja Health
-              <AppText variant="heading" tone="forest">
-                .
-              </AppText>
-            </AppText>
-            <AppText variant="eyebrow" tone="body">
-              WELLNESS, CLOSER TO HOME
-            </AppText>
-          </View>
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="Open profile and preferences"
-            onPress={() => router.push("/profile")}
-            style={styles.avatar}
-          >
-            <AppText variant="subheading" tone="forest">
-              •
-            </AppText>
-          </Pressable>
-        </View>
         <View style={styles.welcome}>
           <AppText variant="title" tone="forest">
             {state ? `Hello, ${state}.` : "Hello."}
@@ -148,22 +125,6 @@ export default function HomeScreen() {
   );
 }
 const styles = StyleSheet.create({
-  brandRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingBottom: space.lg,
-    borderBottomWidth: layout.line,
-    borderColor: palette.line,
-  },
-  avatar: {
-    width: layout.avatar,
-    height: layout.avatar,
-    borderRadius: radius.pill,
-    backgroundColor: palette.cream,
-    alignItems: "center",
-    justifyContent: "center",
-  },
   welcome: {
     flexDirection: "row",
     alignItems: "flex-end",

@@ -765,7 +765,7 @@ Work with the mobile developer to verify:
 - [ ] Historical trend charts
 - [ ] Advanced RAG
 - [ ] More sophisticated environmental modelling
-- [ ] Advanced notifications
+- [x] ~~Advanced notifications~~ (mobile: Expo push on new health-report publish; Profile toggle)
 - [ ] More detailed geographic analysis
 - [ ] Additional AI features
 - [ ] Advanced analytics

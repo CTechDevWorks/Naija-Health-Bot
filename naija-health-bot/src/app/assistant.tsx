@@ -11,6 +11,7 @@ import {
   View,
 } from "react-native";
 import {
+  AppBrandHeader,
   AppText,
   Button,
   IconButton,
@@ -85,32 +86,25 @@ export default function AssistantScreen() {
       style={ui.flex}
       behavior={Platform.OS === "ios" ? "padding" : undefined}
     >
-      <View style={styles.header}>
-        <View style={styles.headerIcon}>
-          <HealthIcon name="chat" />
-        </View>
-        <View style={ui.flex}>
-          <AppText variant="heading" tone="forest">
-            Assistant
+      <View style={styles.topBar}>
+        <AppBrandHeader />
+        <View style={styles.assistantActions}>
+          <AppText variant="caption" tone="body" style={ui.flex}>
+            {assistantOnline ? "Malaria information only" : "Unavailable"}
           </AppText>
-          <AppText variant="caption" tone="body">
-            {assistantOnline
-              ? "Malaria information only"
-              : "Unavailable right now"}
-          </AppText>
-        </View>
-        {signedIn && (
+          {signedIn ? (
+            <IconButton
+              icon="history"
+              label="Saved conversations"
+              onPress={() => setHistoryOpen(true)}
+            />
+          ) : null}
           <IconButton
-            icon="history"
-            label="Saved conversations"
-            onPress={() => setHistoryOpen(true)}
+            icon="plus"
+            label="Start a new conversation"
+            onPress={() => (messages.length ? setConfirm(true) : setDraft(""))}
           />
-        )}
-        <IconButton
-          icon="plus"
-          label="Start a new conversation"
-          onPress={() => (messages.length ? setConfirm(true) : setDraft(""))}
-        />
+        </View>
       </View>
       {canSignIn && (
         <Pressable
@@ -296,20 +290,15 @@ export default function AssistantScreen() {
   );
 }
 const styles = StyleSheet.create({
-  header: {
-    flexDirection: "row",
-    gap: space.md,
-    alignItems: "center",
-    padding: space.lg,
+  topBar: {
+    paddingHorizontal: space.lg,
     paddingTop: space.xl,
+    gap: space.sm,
   },
-  headerIcon: {
-    width: layout.avatar,
-    height: layout.avatar,
-    backgroundColor: palette.softGreen,
-    borderRadius: radius.md,
-    justifyContent: "center",
+  assistantActions: {
+    flexDirection: "row",
     alignItems: "center",
+    gap: space.xs,
   },
   signIn: {
     flexDirection: "row",

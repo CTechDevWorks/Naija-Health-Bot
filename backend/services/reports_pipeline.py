@@ -80,6 +80,7 @@ def run_daily_updates(
         duplicates = len(articles) - len(fresh)
         fresh = fresh[: max(1, limit)]
         truncated = max(0, (fetched - duplicates) - len(fresh))
+        inserted_titles: list[str] = []
 
         for article in fresh:
             try:
@@ -115,6 +116,7 @@ def run_daily_updates(
                 skipped += 1
             else:
                 inserted += 1
+                inserted_titles.append(summary.title)
 
         skipped += duplicates + truncated
         status = "success"
@@ -128,6 +130,15 @@ def run_daily_updates(
             items_inserted=inserted,
             items_skipped=skipped,
         )
+
+        if inserted > 0:
+            try:
+                from services.push_notify import notify_new_health_updates
+
+                notify_new_health_updates(count=inserted, titles=inserted_titles)
+            except Exception:  # noqa: BLE001
+                log.exception("push notify after publish failed")
+
         return PipelineResult(
             status=status,
             triggered_for_date=day,

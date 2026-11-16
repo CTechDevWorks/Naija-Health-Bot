@@ -7,6 +7,7 @@ import AppTabs from "@/components/app-tabs";
 import { AuthProvider } from "@/hooks/useAuth";
 import { EnvironmentProvider } from "@/hooks/useEnvironment";
 import { PrototypeProvider } from "@/hooks/usePrototype";
+import { UpdatePushProvider } from "@/hooks/useUpdatePush";
 import { palette } from "@/constants/designTokens";
 import "@/global.css";
 
@@ -36,8 +37,10 @@ export default function RootLayout() {
       <AuthProvider>
         <EnvironmentProvider>
           <PrototypeProvider>
-            <StatusBar style="dark" />
-            <AppTabs />
+            <UpdatePushProvider>
+              <StatusBar style="dark" />
+              <AppTabs />
+            </UpdatePushProvider>
           </PrototypeProvider>
         </EnvironmentProvider>
       </AuthProvider>

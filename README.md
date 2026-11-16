@@ -182,6 +182,13 @@ npx tsc --noEmit
 npx expo lint
 ```
 
+**Outlook charts** use bundled JSON built from `nasa_power_yearly/` at the repo root. After updating those CSVs:
+
+```sh
+cd naija-health-bot
+npm run build:outlook-data
+```
+
 ### Backend (assistant + RAG + jobs)
 
 Requirements: **Python 3.11+** (3.14 supported in dev), virtualenv.
@@ -205,6 +212,8 @@ pytest
 Confirm: `GET /api/v1/health` → `"rag": true`, `"accounts": true` when keys are set.
 
 **Daily updates job:** `POST /api/v1/jobs/daily-health-updates` with header `X-Job-Secret` (see `UPDATES_JOB_SECRET` in `.env.example`). List reports: `GET /api/v1/health-reports`.
+
+**Push alerts:** run `backend/supabase/push_tokens.sql` in Supabase. In the app, Profile → Notifications → **New health updates**. When the daily job inserts reports, the backend sends an Expo push to registered devices.
 
 Interactive API docs: `http://localhost:8000/docs`.
 

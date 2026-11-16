@@ -38,6 +38,15 @@
         {
           "locationWhenInUsePermission": "Allow 9ja Health to use your location to show the health outlook and weather for your area. You can choose your state manually instead."
         }
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/images/icon.png",
+          "color": "#7DBA84",
+          "sounds": [],
+          "defaultChannel": "health-updates"
+        }
       ]
     ],
     "experiments": {
